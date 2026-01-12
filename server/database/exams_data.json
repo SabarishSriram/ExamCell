@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1768246140754",
+    "course": "Advanced Programming Practice",
+    "date": "2026-01-07T18:30:00.000Z",
+    "time": "02:58",
+    "venue": "TP 401",
+    "year": "2nd Year",
+    "sections": [
+      "Q2",
+      "X1"
+    ]
+  },
+  {
+    "id": "1768246185793",
+    "course": "Computer Networks",
+    "date": "2026-01-07T18:30:00.000Z",
+    "time": "02:59",
+    "venue": "TP 401",
+    "year": "3rd Year",
+    "sections": [
+      "P2",
+      "Q2"
+    ]
+  }
+]

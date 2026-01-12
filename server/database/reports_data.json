@@ -1,0 +1,118 @@
+[
+  {
+    "id": "1768246208670",
+    "examId": "1768246185793",
+    "examName": "Computer Networks",
+    "section": "Q2",
+    "students": [
+      {
+        "regNo": "RA2211028010208",
+        "name": "AADITYA SINGH JAT",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010210",
+        "name": "SHAURYA CHOUDHA",
+        "isPresent": false,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010214",
+        "name": "ANIRUDDH SINGH",
+        "isPresent": true,
+        "activity": "Bit Material",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010221",
+        "name": "LUVNEET VERMA",
+        "isPresent": true,
+        "activity": "Mobile Phone",
+        "remarks": "shirt"
+      },
+      {
+        "regNo": "RA2211028010223",
+        "name": "MINHAJ MUNAWAR KHAN",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010233",
+        "name": "AMAN KUMAR",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      }
+    ],
+    "submittedAt": "2026-01-12T19:30:08.670Z"
+  },
+  {
+    "id": "1768246269425",
+    "examId": "1768246185793",
+    "examName": "Computer Networks",
+    "section": "P2",
+    "students": [
+      {
+        "regNo": "RA2211028010140",
+        "name": "PRANJALI SRIVASTAVA",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010141",
+        "name": "VIHAAN GAUTAM",
+        "isPresent": false,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010151",
+        "name": "KURMADASU ABHIRAM",
+        "isPresent": false,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010153",
+        "name": "ANNAM PANNAGA SAI",
+        "isPresent": true,
+        "activity": "Mobile Phone",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010164",
+        "name": "VED GANESH JADHAV",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010172",
+        "name": "GONGADA BHARGAVA NAIDU",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010180",
+        "name": "YUVRAJ SHAW",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2211028010186",
+        "name": "RANGINENI ANIL KUMAR",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      }
+    ],
+    "submittedAt": "2026-01-12T19:31:09.425Z"
+  }
+]
