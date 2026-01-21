@@ -20,9 +20,9 @@ const ReportsView = () => {
     const fetchData = async () => {
       try {
         const [reportsRes, examsRes, sectionsRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/reports'),
-          axios.get('http://localhost:5000/api/exams'),
-          axios.get('http://localhost:5000/api/sections')
+          axios.get('http://localhost:8000/api/reports'),
+          axios.get('http://localhost:8000/api/exams'),
+          axios.get('http://localhost:8000/api/sections')
         ]);
         setReports(reportsRes.data);
         setExams(examsRes.data);
