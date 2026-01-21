@@ -40,7 +40,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
     }
 
     try {
-      await axios.post('http://localhost:5000/api/exams', {
+      await axios.post(`http://localhost:8000/api/exams`, {
         course,
         date: date.toISOString(),
         time,

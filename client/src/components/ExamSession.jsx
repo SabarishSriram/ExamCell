@@ -24,8 +24,8 @@ const ExamSession = () => {
     const fetchData = async () => {
       try {
         const [examRes, studentRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/exams`),
-          axios.get(`http://localhost:5000/api/students`)
+          axios.get(`http://localhost:8000/api/exams`),
+          axios.get(`http://localhost:8000/api/students`)
         ]);
         
         const currentExam = examRes.data.find(e => e.id === examId);
@@ -71,7 +71,7 @@ const ExamSession = () => {
     };
 
     try {
-      await axios.post('http://localhost:5000/api/reports', reportData);
+      await axios.post('http://localhost:8000/api/reports', reportData);
       alert('Report submitted successfully!');
       navigate('/');
     } catch (error) {
