@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { format, isSameDay } from "date-fns";
 import Navbar from "./components/Navbar";
 import AddExamModal from "./components/AddExamModal";
 import ExamCard from "./components/ExamCard";
@@ -15,27 +16,46 @@ import {
   SelectValue,
 } from "./components/ui/select";
 import { Button } from "./components/ui/button";
-import { Users, GraduationCap } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./components/ui/popover";
+import { Calendar } from "./components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { Calendar as CalendarIcon, MapPin, GraduationCap } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:8000/api";
 
 const Dashboard = ({
   exams,
   courses,
-  sections,
-  searchTerm,
-  setSearchTerm,
-  filterSection,
-  setFilterSection,
+  filterDate,
+  setFilterDate,
+  selectedCourse,
+  setSelectedCourse,
+  venueFilter,
+  setVenueFilter,
   onAddExam,
+  onDeleteExam,
 }) => {
   const filteredExams = exams.filter((exam) => {
-    const matchesSearch = exam.course
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesSection =
-      filterSection === "all" || exam.sections.includes(filterSection);
-    return matchesSearch && matchesSection;
+    const examDate = exam.date ? new Date(exam.date) : null;
+    const matchesDate =
+      !filterDate || (examDate && isSameDay(examDate, filterDate));
+
+    const matchesCourse =
+      selectedCourse === "all" || exam.course === selectedCourse;
+
+    const baseVenue = (exam.venue || "").toLowerCase();
+    const sectionVenues = exam.venueBySection
+      ? Object.values(exam.venueBySection).join(" ").toLowerCase()
+      : "";
+    const combinedVenues = `${baseVenue} ${sectionVenues}`.trim();
+    const matchesVenue =
+      !venueFilter || combinedVenues.includes(venueFilter.toLowerCase());
+
+    return matchesDate && matchesCourse && matchesVenue;
   });
 
   return (
@@ -53,47 +73,59 @@ const Dashboard = ({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-            <div className="relative group w-full sm:w-[320px]">
-              <Input
-                placeholder="Search course name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-12 pl-12 pr-4 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all bg-white shadow-sm font-medium"
-              />
-              <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-primary transition-colors">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full sm:w-[200px] h-12 justify-start text-left font-medium rounded-xl border-slate-200 bg-white shadow-sm text-xs",
+                    !filterDate && "text-slate-400",
+                  )}
                 >
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.3-4.3" />
-                </svg>
-              </div>
-            </div>
+                  <CalendarIcon className="mr-2 h-4 w-4 text-primary" />
+                  {filterDate ? (
+                    format(filterDate, "PPP")
+                  ) : (
+                    <span>Select date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={filterDate}
+                  onSelect={(date) => setFilterDate(date ?? null)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
 
-            <Select value={filterSection} onValueChange={setFilterSection}>
-              <SelectTrigger className="w-full sm:w-[180px] h-12 rounded-xl border-slate-200 bg-white font-bold text-slate-600 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
-                  <SelectValue placeholder="All Sections" />
-                </div>
+            <Select value={selectedCourse} onValueChange={setSelectedCourse}>
+              <SelectTrigger className="w-full sm:w-[220px] h-12 rounded-xl border-slate-200 bg-white font-bold text-slate-600 shadow-sm text-xs">
+                <SelectValue placeholder="All Subjects" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl border-slate-200">
-                <SelectItem value="all">All Sections</SelectItem>
-                {sections.map((section) => (
-                  <SelectItem key={section} value={section}>
-                    Section {section}
+              <SelectContent className="rounded-xl border-slate-200 max-h-64">
+                <SelectItem value="all">All Subjects</SelectItem>
+                {courses.map((course) => (
+                  <SelectItem
+                    key={course["Course Code"]}
+                    value={course["Course Name"]}
+                  >
+                    {course["Course Name"]}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+
+            <div className="relative group w-full sm:w-[220px]">
+              <Input
+                placeholder="Filter by venue..."
+                value={venueFilter}
+                onChange={(e) => setVenueFilter(e.target.value)}
+                className="w-full h-12 pl-10 pr-4 rounded-xl border-slate-200 focus:border-primary focus:ring-primary/20 transition-all bg-white shadow-sm font-medium text-sm"
+              />
+              <MapPin className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
+            </div>
           </div>
         </div>
       </div>
@@ -121,7 +153,11 @@ const Dashboard = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredExams.map((exam) => (
-            <ExamCard key={exam.id} exam={exam} />
+            <ExamCard
+              key={exam.id}
+              exam={exam}
+              onDelete={() => onDeleteExam(exam.id)}
+            />
           ))}
         </div>
       )}
@@ -134,8 +170,9 @@ function App() {
   const [courses, setCourses] = useState([]);
   const [sections, setSections] = useState([]);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterSection, setFilterSection] = useState("all");
+  const [filterDate, setFilterDate] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState("all");
+  const [venueFilter, setVenueFilter] = useState("");
 
   const fetchData = async () => {
     try {
@@ -156,6 +193,18 @@ function App() {
     fetchData();
   }, []);
 
+  const handleDeleteExam = async (examId) => {
+    const confirmed = window.confirm("Delete this exam and its records?");
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/exams/${examId}`);
+      await fetchData();
+    } catch (error) {
+      console.error("Error deleting exam:", error);
+    }
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-slate-50/30">
@@ -168,12 +217,14 @@ function App() {
               <Dashboard
                 exams={exams}
                 courses={courses}
-                sections={sections}
-                searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filterSection={filterSection}
-                setFilterSection={setFilterSection}
+                filterDate={filterDate}
+                setFilterDate={setFilterDate}
+                selectedCourse={selectedCourse}
+                setSelectedCourse={setSelectedCourse}
+                venueFilter={venueFilter}
+                setVenueFilter={setVenueFilter}
                 onAddExam={() => setIsAddModalOpen(true)}
+                onDeleteExam={handleDeleteExam}
               />
             }
           />
