@@ -22,6 +22,7 @@ import { Input } from "./ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 import { ArrowLeft, Save, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Badge } from "./ui/badge";
+import { toast } from "sonner";
 
 const ExamSession = () => {
   const { examId, sectionId } = useParams();
@@ -87,10 +88,11 @@ const ExamSession = () => {
 
     try {
       await axios.post("http://localhost:8000/api/reports", reportData);
-      alert("Report submitted successfully!");
+      toast.success("Report submitted successfully!");
       navigate("/");
     } catch (error) {
       console.error("Error submitting report:", error);
+      toast.error("Failed to submit report. Please try again.");
     }
   };
 
@@ -235,6 +237,7 @@ const ExamSession = () => {
                       <Input
                         placeholder="Additional details..."
                         value={remarks[student.RegNO]}
+                        disabled={!attendance[student.RegNO]}
                         onChange={(e) =>
                           setRemarks((prev) => ({
                             ...prev,

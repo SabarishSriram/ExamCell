@@ -22,6 +22,8 @@ import {
   PopoverTrigger,
 } from "./components/ui/popover";
 import { Calendar } from "./components/ui/calendar";
+import { Toaster } from "./components/ui/sonner";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Calendar as CalendarIcon, MapPin, GraduationCap } from "lucide-react";
 
@@ -194,15 +196,26 @@ function App() {
   }, []);
 
   const handleDeleteExam = async (examId) => {
-    const confirmed = window.confirm("Delete this exam and its records?");
-    if (!confirmed) return;
-
-    try {
-      await axios.delete(`${API_BASE_URL}/exams/${examId}`);
-      await fetchData();
-    } catch (error) {
-      console.error("Error deleting exam:", error);
-    }
+    toast("Delete this exam and its records?", {
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            await axios.delete(`${API_BASE_URL}/exams/${examId}`);
+            await fetchData();
+            toast.success("Exam deleted successfully");
+          } catch (error) {
+            console.error("Error deleting exam:", error);
+            toast.error("Failed to delete exam");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+      duration: 5000,
+    });
   };
 
   return (
@@ -239,6 +252,7 @@ function App() {
           courses={courses}
           sections={sections}
         />
+        <Toaster />
       </div>
     </Router>
   );

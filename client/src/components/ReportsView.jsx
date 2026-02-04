@@ -32,6 +32,7 @@ import {
 } from "./ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const ReportsView = () => {
@@ -50,23 +51,39 @@ const ReportsView = () => {
 
   const handleDeleteReport = async (reportIdOrIds) => {
     const ids = Array.isArray(reportIdOrIds) ? reportIdOrIds : [reportIdOrIds];
-    const confirmed = window.confirm(
+    const message =
       ids.length === 1
         ? "Delete this report record?"
-        : "Delete all report records for this subject?",
-    );
-    if (!confirmed) return;
+        : "Delete all report records for this subject?";
 
-    try {
-      await Promise.all(
-        ids.map((id) =>
-          axios.delete(`http://localhost:8000/api/reports/${id}`),
-        ),
-      );
-      setReports((prev) => prev.filter((r) => !ids.includes(r.id)));
-    } catch (error) {
-      console.error("Error deleting report:", error);
-    }
+    toast(message, {
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            await Promise.all(
+              ids.map((id) =>
+                axios.delete(`http://localhost:8000/api/reports/${id}`),
+              ),
+            );
+            setReports((prev) => prev.filter((r) => !ids.includes(r.id)));
+            toast.success(
+              ids.length === 1
+                ? "Report deleted successfully"
+                : "Reports deleted successfully",
+            );
+          } catch (error) {
+            console.error("Error deleting report:", error);
+            toast.error("Failed to delete report");
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+      duration: 5000,
+    });
   };
 
   useEffect(() => {

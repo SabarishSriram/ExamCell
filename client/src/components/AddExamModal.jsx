@@ -23,6 +23,7 @@ import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
 import { Checkbox } from "./ui/checkbox";
+import { toast } from "sonner";
 
 const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
   const [course, setCourse] = useState("");
@@ -66,12 +67,17 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
     const m = parseInt(mStr, 10);
     let hour24;
     if (h === 12) hour24 = 12;
-    else if (h >= 8 && h <= 11)
-      hour24 = h; // AM
+    else if (h >= 8 && h <= 11) hour24 = h; // AM
     else hour24 = h + 12; // 1-7 -> PM
-    const value = `${String(hour24).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    const value = `${String(hour24).padStart(2, "0")}:${String(m).padStart(
+      2,
+      "0"
+    )}`;
     const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
-    const label = `${String(hour12).padStart(2, "0")}:${String(m).padStart(2, "0")} ${hour24 < 12 ? "am" : "pm"}`;
+    const label = `${String(hour12).padStart(2, "0")}:${String(m).padStart(
+      2,
+      "0"
+    )} ${hour24 < 12 ? "am" : "pm"}`;
     return { value, label, minutes: hour24 * 60 + m };
   };
 
@@ -91,11 +97,11 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
       !year ||
       selectedSections.length === 0 ||
       selectedSections.some(
-        (section) => !venues[section] || !venues[section].trim(),
+        (section) => !venues[section] || !venues[section].trim()
       )
     ) {
-      alert(
-        "Please fill all fields, select at least one section, and enter venue for each selected section",
+      toast.error(
+        "Please fill all fields, select at least one section, and enter venue for each selected section"
       );
       return;
     }
@@ -136,8 +142,10 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
       setVenues({});
       setYear("");
       setSelectedSections([]);
+      toast.success("Exam scheduled successfully!");
     } catch (error) {
       console.error("Error adding exam:", error);
+      toast.error("Failed to schedule exam. Please try again.");
     }
   };
 
@@ -193,7 +201,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                     variant={"outline"}
                     className={cn(
                       "w-full h-10 justify-start text-left font-normal",
-                      !date && "text-muted-foreground",
+                      !date && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -241,7 +249,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                     <SelectContent>
                       {(() => {
                         const selectedFromMinutes = fromOptions.find(
-                          (x) => x.value === fromTime,
+                          (x) => x.value === fromTime
                         )?.minutes;
                         return toOptions.map((o) => (
                           <SelectItem
