@@ -19,14 +19,17 @@ const cors = require("cors");
 const students = require("./database/students");
 const faculty = require("./database/faculty");
 const courses = require("./database/courses");
+const courseFaculty = require("./database/courseFaculty");
 
 const app = express();
 const port = 8000;
 
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Helper to map student to their faculty based on section
@@ -54,6 +57,10 @@ app.get("/api/courses", (req, res) => {
   res.json(courses);
 });
 
+app.get("/api/course-faculty", (req, res) => {
+  res.json(courseFaculty);
+});
+
 app.get("/api/exams", (req, res) => {
   res.json(readData(EXAMS_FILE));
 });
@@ -67,6 +74,36 @@ app.post("/api/exams", (req, res) => {
   exams.push(newExam);
   writeData(EXAMS_FILE, exams);
   res.status(201).json(newExam);
+});
+
+app.put("/api/exams/:id", (req, res) => {
+  const exams = readData(EXAMS_FILE);
+  const index = exams.findIndex((e) => e.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ message: "Exam not found" });
+  }
+  const updatedExam = {
+    ...exams[index],
+    ...req.body,
+    id: exams[index].id,
+  };
+  exams[index] = updatedExam;
+  writeData(EXAMS_FILE, exams);
+  res.json(updatedExam);
+});
+
+app.delete("/api/exams/:id", (req, res) => {
+  const exams = readData(EXAMS_FILE);
+  const reports = readData(REPORTS_FILE);
+  const examId = req.params.id;
+
+  const updatedExams = exams.filter((e) => e.id !== examId);
+  const updatedReports = reports.filter((r) => r.examId !== examId);
+
+  writeData(EXAMS_FILE, updatedExams);
+  writeData(REPORTS_FILE, updatedReports);
+
+  res.status(204).end();
 });
 
 app.get("/api/reports", (req, res) => {
@@ -83,6 +120,34 @@ app.post("/api/reports", (req, res) => {
   reports.push(newReport);
   writeData(REPORTS_FILE, reports);
   res.status(201).json(newReport);
+});
+
+app.put("/api/reports/:id", (req, res) => {
+  const reports = readData(REPORTS_FILE);
+  const index = reports.findIndex((r) => r.id === req.params.id);
+  if (index === -1) {
+    return res.status(404).json({ message: "Report not found" });
+  }
+
+  const existing = reports[index];
+  const updatedReport = {
+    ...existing,
+    ...req.body,
+    id: existing.id,
+    submittedAt: existing.submittedAt,
+  };
+
+  reports[index] = updatedReport;
+  writeData(REPORTS_FILE, reports);
+  res.json(updatedReport);
+});
+
+app.delete("/api/reports/:id", (req, res) => {
+  const reports = readData(REPORTS_FILE);
+  const reportId = req.params.id;
+  const updatedReports = reports.filter((r) => r.id !== reportId);
+  writeData(REPORTS_FILE, updatedReports);
+  res.status(204).end();
 });
 
 app.get("/api/faculty", (req, res) => {

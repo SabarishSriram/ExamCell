@@ -1,39 +1,29 @@
-const courses = [
-  {
-    "Course Code": "21CSC202J",
-    "Course Name": "Operating System",
-    Type: "Core"
-  },
-  {
-    "Course Code": "21CSC301T",
-    "Course Name": "Formal language and automata",
-    Type: "Core"
-  },
-  {
-    "Course Code": "21CSC203P",
-    "Course Name": "Advanced Programming Practice",
-    Type: "Core"
-  },
-  {
-    "Course Code": "21CSC302J",
-    "Course Name": "Computer Networks",
-    Type: "Core"
-  },
-  {
-    "Course Code": "21CSE510T",
-    "Course Name": "Cybersecurity for Mobility Systems",
-    Type: "Elective"
-  },
-  {
-    "Course Code": "21CSE576T",
-    "Course Name": "Micro services and Containerization in Cloud",
-    Type: "Elective"
-  },
-  {
-    "Course Code": "21CSE626T",
-    "Course Name": "Hacker Techniques and Incident Handling",
-    Type: "Elective"
-  }
-];
+const courseFaculty = require("./courseFaculty");
+
+// Derive course list from courseFaculty.js
+const courseMap = new Map();
+
+const addCourseFromBlock = (block) => {
+  if (!block || typeof block !== "object") return;
+  Object.values(block).forEach((course) => {
+    if (!course || typeof course !== "object") return;
+    const code = course.code;
+    if (!code) return;
+    if (courseMap.has(code)) return;
+
+    const name = course.name || code;
+    courseMap.set(code, {
+      "Course Code": code,
+      "Course Name": name,
+      Type: "Core",
+    });
+  });
+};
+
+addCourseFromBlock(courseFaculty.I_YEAR);
+addCourseFromBlock(courseFaculty.II_YEAR);
+addCourseFromBlock(courseFaculty.III_YEAR);
+
+const courses = Array.from(courseMap.values());
 
 module.exports = courses;
