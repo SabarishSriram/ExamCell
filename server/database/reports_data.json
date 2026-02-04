@@ -1,118 +1,81 @@
 [
   {
-    "id": "1768246208670",
-    "examId": "1768246185793",
-    "examName": "Computer Networks",
-    "section": "Q2",
+    "id": "1770219906402",
+    "examId": "1770219889103",
+    "examName": "Philosophy of Engineering",
+    "section": "AH1",
     "students": [
       {
-        "regNo": "RA2211028010208",
-        "name": "AADITYA SINGH JAT",
-        "isPresent": true,
-        "activity": "None",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2211028010210",
-        "name": "SHAURYA CHOUDHA",
-        "isPresent": false,
-        "activity": "None",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2211028010214",
-        "name": "ANIRUDDH SINGH",
+        "regNo": "RA2311032010000",
+        "name": "Aarav Sharma",
         "isPresent": true,
         "activity": "Bit Material",
         "remarks": ""
       },
       {
-        "regNo": "RA2211028010221",
-        "name": "LUVNEET VERMA",
-        "isPresent": true,
-        "activity": "Mobile Phone",
-        "remarks": "shirt"
-      },
-      {
-        "regNo": "RA2211028010223",
-        "name": "MINHAJ MUNAWAR KHAN",
-        "isPresent": true,
-        "activity": "None",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2211028010233",
-        "name": "AMAN KUMAR",
-        "isPresent": true,
-        "activity": "None",
-        "remarks": ""
-      }
-    ],
-    "submittedAt": "2026-01-12T19:30:08.670Z"
-  },
-  {
-    "id": "1768246269425",
-    "examId": "1768246185793",
-    "examName": "Computer Networks",
-    "section": "P2",
-    "students": [
-      {
-        "regNo": "RA2211028010140",
-        "name": "PRANJALI SRIVASTAVA",
-        "isPresent": true,
-        "activity": "None",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2211028010141",
-        "name": "VIHAAN GAUTAM",
-        "isPresent": false,
-        "activity": "None",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2211028010151",
-        "name": "KURMADASU ABHIRAM",
-        "isPresent": false,
-        "activity": "None",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2211028010153",
-        "name": "ANNAM PANNAGA SAI",
+        "regNo": "RA2311032010001",
+        "name": "Vihaan Verma",
         "isPresent": true,
         "activity": "Mobile Phone",
         "remarks": ""
       },
       {
-        "regNo": "RA2211028010164",
-        "name": "VED GANESH JADHAV",
+        "regNo": "RA2311032010002",
+        "name": "Aditya Reddy",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2211028010172",
-        "name": "GONGADA BHARGAVA NAIDU",
+        "regNo": "RA2311032010003",
+        "name": "Ishaan Iyer",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2211028010180",
-        "name": "YUVRAJ SHAW",
+        "regNo": "RA2311032010004",
+        "name": "Pranav Patel",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2211028010186",
-        "name": "RANGINENI ANIL KUMAR",
+        "regNo": "RA2311032010005",
+        "name": "Sanjana Nair",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010006",
+        "name": "Ananya Gupta",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010007",
+        "name": "Diya Rao",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010008",
+        "name": "Karthik Menon",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010009",
+        "name": "Shruti Das",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       }
     ],
-    "submittedAt": "2026-01-12T19:31:09.425Z"
+    "submittedAt": "2026-02-04T15:45:06.402Z"
   }
 ]

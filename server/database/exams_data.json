@@ -1,26 +1,20 @@
 [
   {
-    "id": "1768246140754",
-    "course": "Advanced Programming Practice",
-    "date": "2026-01-07T18:30:00.000Z",
-    "time": "02:58",
-    "venue": "TP 401",
-    "year": "2nd Year",
+    "id": "1770219889103",
+    "course": "Philosophy of Engineering",
+    "date": "2026-02-06T18:30:00.000Z",
+    "time": "08:00 am - 09:40 am",
+    "from": "08:00 am",
+    "to": "09:40 am",
+    "year": "1st Year",
     "sections": [
-      "Q2",
-      "X1"
-    ]
-  },
-  {
-    "id": "1768246185793",
-    "course": "Computer Networks",
-    "date": "2026-01-07T18:30:00.000Z",
-    "time": "02:59",
-    "venue": "TP 401",
-    "year": "3rd Year",
-    "sections": [
-      "P2",
-      "Q2"
-    ]
+      "AH1",
+      "AH2"
+    ],
+    "venueBySection": {
+      "AH1": "TP401",
+      "AH2": "TP402"
+    },
+    "venue": "TP401"
   }
 ]
