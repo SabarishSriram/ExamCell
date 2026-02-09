@@ -139,6 +139,7 @@ const ugAllocSheet3 = {
 
     DESIGN_THINKING: {
       code: "21DCS201P",
+      name: "Design Thinking and Methodology",
       slot: "G",
       data: [
         { section: "U1", faculty: "Dr.L.N.B.Srinivas" },
@@ -153,6 +154,7 @@ const ugAllocSheet3 = {
 
     SOCIAL_ENGINEERING: {
       code: "21PDH201T",
+      name: "Social Engineering",
       slot: "E",
       data: [
         { section: "U1", faculty: "Dr.Manickam" },
@@ -171,6 +173,7 @@ const ugAllocSheet3 = {
   III_YEAR: {
     DATA_SCIENCE: {
       code: "21CSS303T",
+      name: "Data Science",
       slot: "F",
       data: [
         { section: "U1", dept: "Cloud", faculty: "Dr.Justina" },
@@ -185,6 +188,7 @@ const ugAllocSheet3 = {
 
     SEPM: {
       code: "21CSC303J",
+      name: "Software Engineering and Project Management",
       slot: "B",
       data: [
         { section: "U1", faculty: "Dr.Saveetha" },
@@ -239,7 +243,7 @@ const ugAllocSheet3 = {
       code: "21CSC315J",
       name: "Fog Computing",
       data: [
-        { section: "Z2", faculty: "Dr.Prasath" },
+        { section: "Y2", faculty: "Dr.Prasath" },
         { section: "Z2", faculty: "Dr.N.Saravanan" },
       ],
     },
