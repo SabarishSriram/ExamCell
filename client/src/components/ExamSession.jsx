@@ -229,6 +229,9 @@ const ExamSession = () => {
                           <SelectItem value="Mobile Phone">
                             Mobile Phone
                           </SelectItem>
+                          <SelectItem value="Late Arrival">
+                            Late Arrival
+                          </SelectItem>
                           <SelectItem value="Dress Code">Dress Code</SelectItem>
                         </SelectContent>
                       </Select>

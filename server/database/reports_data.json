@@ -1,81 +1,321 @@
 [
   {
-    "id": "1770219906402",
-    "examId": "1770219889103",
-    "examName": "Philosophy of Engineering",
-    "section": "AH1",
+    "id": "1770646645704",
+    "examId": "1770646576753",
+    "examName": "Fog Computing",
+    "section": "Z2",
     "students": [
       {
-        "regNo": "RA2311032010000",
-        "name": "Aarav Sharma",
+        "regNo": "RA2311032010270",
+        "name": "Arjun Gupta",
+        "isPresent": false,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010271",
+        "name": "Sneha Rao",
+        "isPresent": false,
+        "activity": "None",
+        "remarks": "",
+        "actionTaken": "suspended"
+      },
+      {
+        "regNo": "RA2311032010272",
+        "name": "Aarav Menon",
         "isPresent": true,
         "activity": "Bit Material",
-        "remarks": ""
+        "remarks": "LATE",
+        "actionTaken": "suspended"
       },
       {
-        "regNo": "RA2311032010001",
-        "name": "Vihaan Verma",
-        "isPresent": true,
-        "activity": "Mobile Phone",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2311032010002",
-        "name": "Aditya Reddy",
+        "regNo": "RA2311032010273",
+        "name": "Vihaan Das",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2311032010003",
-        "name": "Ishaan Iyer",
+        "regNo": "RA2311032010274",
+        "name": "Aditya Singh",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2311032010004",
-        "name": "Pranav Patel",
+        "regNo": "RA2311032010275",
+        "name": "Ishaan Chandra",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2311032010005",
-        "name": "Sanjana Nair",
+        "regNo": "RA2311032010276",
+        "name": "Pranav Sharma",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2311032010006",
-        "name": "Ananya Gupta",
+        "regNo": "RA2311032010277",
+        "name": "Sanjana Verma",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2311032010007",
-        "name": "Diya Rao",
+        "regNo": "RA2311032010278",
+        "name": "Ananya Reddy",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       },
       {
-        "regNo": "RA2311032010008",
-        "name": "Karthik Menon",
-        "isPresent": true,
-        "activity": "None",
-        "remarks": ""
-      },
-      {
-        "regNo": "RA2311032010009",
-        "name": "Shruti Das",
+        "regNo": "RA2311032010279",
+        "name": "Diya Iyer",
         "isPresent": true,
         "activity": "None",
         "remarks": ""
       }
     ],
-    "submittedAt": "2026-02-04T15:45:06.402Z"
+    "submittedAt": "2026-02-09T14:17:25.704Z"
+  },
+  {
+    "id": "1770646684380",
+    "examId": "1770646576753",
+    "examName": "Fog Computing",
+    "section": "Y2",
+    "students": [
+      {
+        "regNo": "RA2311032010260",
+        "name": "Pranav Menon",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010261",
+        "name": "Sanjana Das",
+        "isPresent": true,
+        "activity": "Bit Material",
+        "remarks": "PHONE",
+        "actionTaken": "dismissed, for 1 week"
+      },
+      {
+        "regNo": "RA2311032010262",
+        "name": "Ananya Singh",
+        "isPresent": false,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010263",
+        "name": "Diya Chandra",
+        "isPresent": false,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010264",
+        "name": "Karthik Sharma",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010265",
+        "name": "Shruti Verma",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010266",
+        "name": "Rahul Reddy",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010267",
+        "name": "Neha Iyer",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010268",
+        "name": "Rohan Patel",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010269",
+        "name": "Priya Nair",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      }
+    ],
+    "submittedAt": "2026-02-09T14:18:04.380Z"
+  },
+  {
+    "id": "1770647964782",
+    "examId": "1770646576753",
+    "examName": "Fog Computing",
+    "section": "Y2",
+    "students": [
+      {
+        "regNo": "RA2311032010260",
+        "name": "Pranav Menon",
+        "isPresent": true,
+        "activity": "Mobile Phone",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010261",
+        "name": "Sanjana Das",
+        "isPresent": true,
+        "activity": "Late Arrival",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010262",
+        "name": "Ananya Singh",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010263",
+        "name": "Diya Chandra",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010264",
+        "name": "Karthik Sharma",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010265",
+        "name": "Shruti Verma",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010266",
+        "name": "Rahul Reddy",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010267",
+        "name": "Neha Iyer",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010268",
+        "name": "Rohan Patel",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010269",
+        "name": "Priya Nair",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      }
+    ],
+    "submittedAt": "2026-02-09T14:39:24.782Z"
+  },
+  {
+    "id": "1770647989357",
+    "examId": "1770646576753",
+    "examName": "Fog Computing",
+    "section": "Z2",
+    "students": [
+      {
+        "regNo": "RA2311032010270",
+        "name": "Arjun Gupta",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010271",
+        "name": "Sneha Rao",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010272",
+        "name": "Aarav Menon",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010273",
+        "name": "Vihaan Das",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010274",
+        "name": "Aditya Singh",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010275",
+        "name": "Ishaan Chandra",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010276",
+        "name": "Pranav Sharma",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010277",
+        "name": "Sanjana Verma",
+        "isPresent": true,
+        "activity": "None",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010278",
+        "name": "Ananya Reddy",
+        "isPresent": true,
+        "activity": "Mobile Phone",
+        "remarks": ""
+      },
+      {
+        "regNo": "RA2311032010279",
+        "name": "Diya Iyer",
+        "isPresent": true,
+        "activity": "Late Arrival",
+        "remarks": ""
+      }
+    ],
+    "submittedAt": "2026-02-09T14:39:49.357Z"
   }
 ]

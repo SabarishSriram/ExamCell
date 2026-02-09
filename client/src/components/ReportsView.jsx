@@ -16,11 +16,13 @@ import {
   TableRow,
 } from "./ui/table";
 import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 import {
   ClipboardList,
   AlertTriangle,
   UserX,
   Calendar as CalendarIcon,
+  Download,
 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import {
@@ -32,22 +34,32 @@ import {
 } from "./ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Calendar } from "./ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const ReportsView = () => {
   const [reports, setReports] = useState([]);
   const [exams, setExams] = useState([]);
-  const [sections, setSections] = useState([]);
   const [courses, setCourses] = useState([]);
   const [faculty, setFaculty] = useState([]);
   const [courseFaculty, setCourseFaculty] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [selectedCourse, setSelectedCourse] = useState("all");
-  const [selectedSection, setSelectedSection] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all"); // all | absent | malpractice
   const [filterDate, setFilterDate] = useState(null); // Date | null
   const [dateOpen, setDateOpen] = useState(false);
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [actionText, setActionText] = useState("");
 
   const handleDeleteReport = async (reportIdOrIds) => {
     const ids = Array.isArray(reportIdOrIds) ? reportIdOrIds : [reportIdOrIds];
@@ -89,24 +101,16 @@ const ReportsView = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [
-          reportsRes,
-          examsRes,
-          sectionsRes,
-          coursesRes,
-          facultyRes,
-          courseFacultyRes,
-        ] = await Promise.all([
-          axios.get("http://localhost:8000/api/reports"),
-          axios.get("http://localhost:8000/api/exams"),
-          axios.get("http://localhost:8000/api/sections"),
-          axios.get("http://localhost:8000/api/courses"),
-          axios.get("http://localhost:8000/api/faculty"),
-          axios.get("http://localhost:8000/api/course-faculty"),
-        ]);
+        const [reportsRes, examsRes, coursesRes, facultyRes, courseFacultyRes] =
+          await Promise.all([
+            axios.get("http://localhost:8000/api/reports"),
+            axios.get("http://localhost:8000/api/exams"),
+            axios.get("http://localhost:8000/api/courses"),
+            axios.get("http://localhost:8000/api/faculty"),
+            axios.get("http://localhost:8000/api/course-faculty"),
+          ]);
         setReports(reportsRes.data);
         setExams(examsRes.data);
-        setSections(sectionsRes.data);
         setCourses(coursesRes.data);
         setFaculty(facultyRes.data);
         // Flatten course-faculty data into an easy lookup list
@@ -158,9 +162,7 @@ const ReportsView = () => {
 
     const matchesCourse =
       selectedCourse === "all" || courseName === selectedCourse;
-    const matchesSection =
-      selectedSection === "all" || report.section === selectedSection;
-    if (!matchesCourse || !matchesSection) return false;
+    if (!matchesCourse) return false;
 
     if (filterDate) {
       const examDateSource = linkedExam?.date || report.submittedAt;
@@ -171,6 +173,16 @@ const ReportsView = () => {
 
     return true;
   });
+
+  const malpracticeHistoryByReg = reports.reduce((acc, report) => {
+    if (!Array.isArray(report.students)) return acc;
+    report.students.forEach((s) => {
+      if (s.activity && s.activity !== "None" && s.regNo) {
+        acc[s.regNo] = (acc[s.regNo] || 0) + 1;
+      }
+    });
+    return acc;
+  }, {});
 
   // Flatten and group reported students by course so that
   // each subject appears once with all its reported students.
@@ -192,24 +204,36 @@ const ReportsView = () => {
     );
     const courseFacultyName = courseFacultyEntry?.facultyName || "—";
 
-    return report.students
-      .filter((s) => !s.isPresent || s.activity !== "None" || s.remarks)
-      .map((s) => ({
-        key: `${report.id}-${s.regNo}`,
-        reportId: report.id,
-        examName: report.examName,
-        section: report.section,
-        examDate,
-        courseName,
-        courseCode,
-        facultyName,
-        courseFacultyName,
-        regNo: s.regNo,
-        name: s.name,
-        isPresent: s.isPresent,
-        activity: s.activity,
-        remarks: s.remarks,
-      }));
+    let studentsForReport = report.students.filter(
+      (s) => !s.isPresent || s.activity !== "None" || s.remarks,
+    );
+
+    if (statusFilter === "absent") {
+      studentsForReport = studentsForReport.filter((s) => !s.isPresent);
+    } else if (statusFilter === "malpractice") {
+      studentsForReport = studentsForReport.filter(
+        (s) => s.activity && s.activity !== "None",
+      );
+    }
+
+    return studentsForReport.map((s) => ({
+      key: `${report.id}-${s.regNo}`,
+      reportId: report.id,
+      examName: report.examName,
+      section: report.section,
+      examDate,
+      courseName,
+      courseCode,
+      facultyName,
+      courseFacultyName,
+      regNo: s.regNo,
+      name: s.name,
+      isPresent: s.isPresent,
+      activity: s.activity,
+      remarks: s.remarks,
+      malpracticeCount: malpracticeHistoryByReg[s.regNo] || 0,
+      actionTaken: s.actionTaken || "",
+    }));
   });
 
   const groupedByCourse = reportRows.reduce((acc, row) => {
@@ -226,6 +250,107 @@ const ReportsView = () => {
   }, {});
 
   const groupedEntries = Object.values(groupedByCourse);
+
+  const handleExportSheet = () => {
+    if (reportRows.length === 0) {
+      toast.error("No records to export");
+      return;
+    }
+
+    const escapeCsv = (value) => {
+      if (value === null || value === undefined) return "";
+      const str = String(value).replace(/"/g, '""');
+      return /[",\n]/.test(str) ? `"${str}"` : str;
+    };
+
+    const header = [
+      "Exam Date",
+      "Course Code",
+      "Course Name",
+      "Section",
+      "Reg No",
+      "Student Name",
+      "FA Name",
+      "Course Faculty",
+      "Status",
+      "Activity",
+      "History of Malpractices",
+      "Action Taken",
+      "Remarks",
+    ];
+
+    const rows = reportRows.map((row) => {
+      const examDateStr = row.examDate
+        ? format(row.examDate, "dd/MM/yyyy")
+        : "";
+      const status = row.isPresent ? "PRESENT" : "ABSENT";
+
+      return [
+        examDateStr,
+        row.courseCode,
+        row.courseName,
+        row.section,
+        row.regNo,
+        row.name,
+        row.facultyName,
+        row.courseFacultyName,
+        status,
+        row.activity,
+        row.malpracticeCount,
+        row.actionTaken || "",
+        row.remarks || "",
+      ]
+        .map(escapeCsv)
+        .join(",");
+    });
+
+    const csvContent = [header.map(escapeCsv).join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "exam_reports.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleSaveAction = async () => {
+    if (!selectedRow) return;
+    try {
+      const reportId = selectedRow.reportId;
+      const existing = reports.find((r) => r.id === reportId);
+      if (!existing) {
+        toast.error("Report not found for this record");
+        return;
+      }
+
+      const updatedReport = {
+        ...existing,
+        students: existing.students.map((s) =>
+          s.regNo === selectedRow.regNo ? { ...s, actionTaken: actionText } : s,
+        ),
+      };
+
+      await axios.put(
+        `http://localhost:8000/api/reports/${reportId}`,
+        updatedReport,
+      );
+
+      setReports((prev) =>
+        prev.map((r) => (r.id === reportId ? updatedReport : r)),
+      );
+      toast.success("Action taken updated successfully");
+      setActionDialogOpen(false);
+      setSelectedRow(null);
+    } catch (error) {
+      console.error("Error saving action taken:", error);
+      toast.error("Failed to save action taken");
+    }
+  };
 
   if (loading)
     return <div className="p-20 text-center">Loading Reports...</div>;
@@ -285,20 +410,28 @@ const ReportsView = () => {
               ))}
             </SelectContent>
           </Select>
-
-          <Select value={selectedSection} onValueChange={setSelectedSection}>
-            <SelectTrigger className="w-full sm:w-[160px] h-10 rounded-xl border-slate-200 bg-white font-semibold text-xs">
-              <SelectValue placeholder="Section" />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px] h-10 rounded-xl border-slate-200 bg-white font-semibold text-xs">
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Sections</SelectItem>
-              {sections.map((s) => (
-                <SelectItem key={s} value={s}>
-                  Section {s}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">All Records</SelectItem>
+              <SelectItem value="absent">Absentees Only</SelectItem>
+              <SelectItem value="malpractice">Malpractices Only</SelectItem>
             </SelectContent>
           </Select>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleExportSheet}
+            disabled={reportRows.length === 0}
+            className="h-10 px-4 rounded-xl border-slate-200 bg-white font-semibold text-xs flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Export as Sheet
+          </Button>
         </div>
       </div>
 
@@ -365,35 +498,44 @@ const ReportsView = () => {
                 </CardHeader>
                 <CardContent className="p-0 overflow-hidden">
                   <div className="max-h-[480px] overflow-y-auto overflow-x-auto">
-                    <Table className="min-w-[900px]">
+                    <Table className="min-w-[1080px] text-xs">
                       <TableHeader className="bg-slate-50/20">
                         <TableRow>
                           <TableHead className="w-[120px] font-bold text-slate-400 pl-6 uppercase text-[10px] tracking-widest">
                             Date
                           </TableHead>
-                          <TableHead className="w-[140px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+                          <TableHead className="w-[110px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                             Course Code
                           </TableHead>
-                          <TableHead className="w-[140px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+                          <TableHead className="w-[110px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                             Reg NO
                           </TableHead>
-                          <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+                          <TableHead className="w-[160px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                             Student Name
                           </TableHead>
-                          <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+                          <TableHead className="w-[160px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                             FA Name
                           </TableHead>
-                          <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+                          <TableHead className="w-[160px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                             Course Faculty
                           </TableHead>
                           <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest text-center">
                             Status
                           </TableHead>
-                          <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+                          <TableHead className="w-[260px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
                             Activity Found
+                          </TableHead>
+                          <TableHead className="w-[80px] font-bold text-slate-400 uppercase text-[10px] tracking-widest text-center">
+                            History of Malpractices
                           </TableHead>
                           <TableHead className="font-bold text-slate-400 uppercase text-[10px] tracking-widest pr-6">
                             Remarks
+                          </TableHead>
+                          <TableHead className="w-[110px] font-bold text-slate-400 uppercase text-[10px] tracking-widest text-center">
+                            Manage
+                          </TableHead>
+                          <TableHead className="w-[220px] font-bold text-slate-400 uppercase text-[10px] tracking-widest">
+                            Action Taken
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -402,7 +544,8 @@ const ReportsView = () => {
                           <TableRow
                             key={s.regNo}
                             className={
-                              s.activity !== "None" ? "bg-amber-50/10" : ""
+                              (s.activity !== "None" ? "bg-amber-50/10 " : "") +
+                              "text-[11px]"
                             }
                           >
                             <TableCell className="font-mono text-xs font-bold text-slate-500 pl-6">
@@ -416,13 +559,13 @@ const ReportsView = () => {
                             <TableCell className="font-mono text-xs font-bold text-slate-500">
                               {s.regNo}
                             </TableCell>
-                            <TableCell className="font-bold text-slate-800 tracking-tight">
+                            <TableCell className="w-[160px] font-bold text-slate-800 tracking-tight">
                               {s.name}
                             </TableCell>
-                            <TableCell className="text-xs text-slate-600 font-semibold">
+                            <TableCell className="w-[160px] text-xs text-slate-600 font-semibold">
                               {s.facultyName}
                             </TableCell>
-                            <TableCell className="text-xs text-slate-600 font-semibold">
+                            <TableCell className="w-[160px] text-xs text-slate-600 font-semibold">
                               {s.courseFacultyName}
                             </TableCell>
                             <TableCell className="text-center">
@@ -442,14 +585,17 @@ const ReportsView = () => {
                                 </Badge>
                               )}
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="w-[260px] whitespace-nowrap">
                               {s.activity !== "None" ? (
-                                <Badge className="bg-amber-400 text-white border-none font-black shadow-lg shadow-amber-200">
+                                <Badge className="inline-flex items-center justify-center px-3 py-1 rounded-full border hover:bg-sky-50 border-sky-200 bg-sky-50 text-sky-700 font-semibold tracking-wide text-[10px]">
                                   {s.activity.toUpperCase()}
                                 </Badge>
                               ) : (
                                 <span className="text-slate-200">—</span>
                               )}
+                            </TableCell>
+                            <TableCell className="w-[80px] text-center text-[10px] text-slate-600 font-semibold">
+                              {s.malpracticeCount}
                             </TableCell>
                             <TableCell className="text-xs text-slate-500 font-medium italic pr-6 max-w-[200px] truncate">
                               {s.remarks || (
@@ -458,18 +604,50 @@ const ReportsView = () => {
                                 </span>
                               )}
                             </TableCell>
-                          </TableRow>
-                        ))}
-                        {absentees.length === 0 && malpractices.length === 0 && (
-                          <TableRow>
-                            <TableCell
-                              colSpan={5}
-                              className="h-24 text-center text-slate-400 font-bold italic"
-                            >
-                              All students successfully passed proctoring check.
+                            <TableCell className="w-[110px] text-center text-xs text-slate-600">
+                              {s.activity !== "None" ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedRow(s);
+                                    setActionText(s.actionTaken || "");
+                                    setActionDialogOpen(true);
+                                  }}
+                                  className="h-7 px-3 text-[10px] rounded-full border-primary/50 text-primary hover:bg-primary/10"
+                                >
+                                  {s.actionTaken ? "Edit" : "Manage"}
+                                </Button>
+                              ) : (
+                                <span className="text-slate-300 text-[10px]">
+                                  —
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-xs text-slate-600 max-w-[220px] truncate">
+                              {s.actionTaken ? (
+                                s.actionTaken
+                              ) : (
+                                <span className="text-slate-300 text-[10px]">
+                                  —
+                                </span>
+                              )}
                             </TableCell>
                           </TableRow>
-                        )}
+                        ))}
+                        {absentees.length === 0 &&
+                          malpractices.length === 0 && (
+                            <TableRow>
+                              <TableCell
+                                colSpan={5}
+                                className="h-24 text-center text-slate-400 font-bold italic"
+                              >
+                                All students successfully passed proctoring
+                                check.
+                              </TableCell>
+                            </TableRow>
+                          )}
                       </TableBody>
                     </Table>
                   </div>
@@ -479,6 +657,57 @@ const ReportsView = () => {
           })}
         </div>
       )}
+
+      <Dialog
+        open={actionDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActionDialogOpen(false);
+            setSelectedRow(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>
+              Action for {selectedRow?.name} ({selectedRow?.regNo})
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="text-sm text-slate-700">
+              <span className="font-semibold">History of malpractices:</span>{" "}
+              <span className="font-bold">
+                {selectedRow?.malpracticeCount ?? 0}
+              </span>
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
+                Action Taken
+              </p>
+              <Input
+                value={actionText}
+                onChange={(e) => setActionText(e.target.value)}
+                placeholder="Enter action taken..."
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setActionDialogOpen(false);
+                setSelectedRow(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="button" onClick={handleSaveAction}>
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

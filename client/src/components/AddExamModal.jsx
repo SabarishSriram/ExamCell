@@ -67,16 +67,17 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
     const m = parseInt(mStr, 10);
     let hour24;
     if (h === 12) hour24 = 12;
-    else if (h >= 8 && h <= 11) hour24 = h; // AM
+    else if (h >= 8 && h <= 11)
+      hour24 = h; // AM
     else hour24 = h + 12; // 1-7 -> PM
     const value = `${String(hour24).padStart(2, "0")}:${String(m).padStart(
       2,
-      "0"
+      "0",
     )}`;
     const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
     const label = `${String(hour12).padStart(2, "0")}:${String(m).padStart(
       2,
-      "0"
+      "0",
     )} ${hour24 < 12 ? "am" : "pm"}`;
     return { value, label, minutes: hour24 * 60 + m };
   };
@@ -86,6 +87,8 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
   const [venues, setVenues] = useState({});
   const [year, setYear] = useState("");
   const [selectedSections, setSelectedSections] = useState([]);
+
+  const filteredCourses = year ? courses.filter((c) => c.Year === year) : [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,11 +100,11 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
       !year ||
       selectedSections.length === 0 ||
       selectedSections.some(
-        (section) => !venues[section] || !venues[section].trim()
+        (section) => !venues[section] || !venues[section].trim(),
       )
     ) {
       toast.error(
-        "Please fill all fields, select at least one section, and enter venue for each selected section"
+        "Please fill all fields, select at least one section, and enter venue for each selected section",
       );
       return;
     }
@@ -176,20 +179,44 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="course">Course</Label>
-            <Select value={course} onValueChange={setCourse}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a course" />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((c) => (
-                  <SelectItem key={c["Course Code"]} value={c["Course Name"]}>
-                    {c["Course Name"]} ({c["Course Code"]})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="year">Year</Label>
+              <Select
+                value={year}
+                onValueChange={(val) => {
+                  setYear(val);
+                  setCourse("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1st Year">1st Year</SelectItem>
+                  <SelectItem value="2nd Year">2nd Year</SelectItem>
+                  <SelectItem value="3rd Year">3rd Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="course">Course</Label>
+              <Select value={course} onValueChange={setCourse} disabled={!year}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={year ? "Select a course" : "Select year first"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredCourses.map((c) => (
+                    <SelectItem key={c["Course Code"]} value={c["Course Name"]}>
+                      {c["Course Name"]} ({c["Course Code"]})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 items-end">
@@ -201,7 +228,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                     variant={"outline"}
                     className={cn(
                       "w-full h-10 justify-start text-left font-normal",
-                      !date && "text-muted-foreground"
+                      !date && "text-muted-foreground",
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
@@ -249,7 +276,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                     <SelectContent>
                       {(() => {
                         const selectedFromMinutes = fromOptions.find(
-                          (x) => x.value === fromTime
+                          (x) => x.value === fromTime,
                         )?.minutes;
                         return toOptions.map((o) => (
                           <SelectItem
@@ -269,23 +296,6 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                   </Select>
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="year">Year</Label>
-              <Select value={year} onValueChange={setYear}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1st Year">1st Year</SelectItem>
-                  <SelectItem value="2nd Year">2nd Year</SelectItem>
-                  <SelectItem value="3rd Year">3rd Year</SelectItem>
-                  <SelectItem value="4th Year">4th Year</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
 

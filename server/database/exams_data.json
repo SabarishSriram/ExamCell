@@ -16,5 +16,23 @@
       "AH2": "TP402"
     },
     "venue": "TP401"
+  },
+  {
+    "id": "1770646576753",
+    "course": "Fog Computing",
+    "date": "2026-02-09T18:30:00.000Z",
+    "time": "08:00 am - 09:40 am",
+    "from": "08:00 am",
+    "to": "09:40 am",
+    "year": "3rd Year",
+    "sections": [
+      "Z2",
+      "Y2"
+    ],
+    "venueBySection": {
+      "Z2": "TP415",
+      "Y2": "TP410"
+    },
+    "venue": "TP415"
   }
 ]
