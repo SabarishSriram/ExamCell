@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { api } from "@/lib/api";
 import { format, isSameDay } from "date-fns";
 import Navbar from "./components/Navbar";
 import AddExamModal from "./components/AddExamModal";
 import ExamCard from "./components/ExamCard";
 import ExamSession from "./components/ExamSession";
 import ReportsView from "./components/ReportsView";
+import LoginPage from "./components/LoginPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Input } from "./components/ui/input";
 import {
   Select,
@@ -26,8 +28,6 @@ import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Calendar as CalendarIcon, MapPin, GraduationCap } from "lucide-react";
-
-const API_BASE_URL = "http://localhost:8000/api";
 
 const Dashboard = ({
   exams,
@@ -179,9 +179,9 @@ function App() {
   const fetchData = async () => {
     try {
       const [examsRes, coursesRes, sectionsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/exams`),
-        axios.get(`${API_BASE_URL}/courses`),
-        axios.get(`${API_BASE_URL}/sections`),
+        api.get("/exams"),
+        api.get("/courses"),
+        api.get("/sections"),
       ]);
       setExams(examsRes.data);
       setCourses(coursesRes.data);
@@ -192,7 +192,7 @@ function App() {
   };
 
   useEffect(() => {
-    fetchData();
+    if (sessionStorage.getItem("token")) fetchData();
   }, []);
 
   const handleDeleteExam = async (examId) => {
@@ -201,7 +201,7 @@ function App() {
         label: "Delete",
         onClick: async () => {
           try {
-            await axios.delete(`${API_BASE_URL}/exams/${examId}`);
+            await api.delete(`/exams/${examId}`);
             await fetchData();
             toast.success("Exam deleted successfully");
           } catch (error) {
@@ -221,28 +221,46 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-slate-50/30">
-        <Navbar onAddExam={() => setIsAddModalOpen(true)} />
-
         <Routes>
+          <Route path="/login" element={<LoginPage onLoginSuccess={fetchData} />} />
           <Route
             path="/"
             element={
-              <Dashboard
-                exams={exams}
-                courses={courses}
-                filterDate={filterDate}
-                setFilterDate={setFilterDate}
-                selectedCourse={selectedCourse}
-                setSelectedCourse={setSelectedCourse}
-                venueFilter={venueFilter}
-                setVenueFilter={setVenueFilter}
-                onAddExam={() => setIsAddModalOpen(true)}
-                onDeleteExam={handleDeleteExam}
-              />
+              <ProtectedRoute>
+                <Navbar onAddExam={() => setIsAddModalOpen(true)} />
+                <Dashboard
+                  exams={exams}
+                  courses={courses}
+                  filterDate={filterDate}
+                  setFilterDate={setFilterDate}
+                  selectedCourse={selectedCourse}
+                  setSelectedCourse={setSelectedCourse}
+                  venueFilter={venueFilter}
+                  setVenueFilter={setVenueFilter}
+                  onAddExam={() => setIsAddModalOpen(true)}
+                  onDeleteExam={handleDeleteExam}
+                />
+              </ProtectedRoute>
             }
           />
-          <Route path="/reports" element={<ReportsView />} />
-          <Route path="/session/:examId/:sectionId" element={<ExamSession />} />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <Navbar onAddExam={() => setIsAddModalOpen(true)} />
+                <ReportsView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/session/:examId/:sectionId"
+            element={
+              <ProtectedRoute>
+                <Navbar onAddExam={() => setIsAddModalOpen(true)} />
+                <ExamSession />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
 
         <AddExamModal

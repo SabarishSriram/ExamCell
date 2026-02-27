@@ -1,5 +1,6 @@
-const fs = require("fs");
 const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
+const fs = require("fs");
 
 const EXAMS_FILE = path.join(__dirname, "database", "exams_data.json");
 const REPORTS_FILE = path.join(__dirname, "database", "reports_data.json");
@@ -16,6 +17,7 @@ const writeData = (file, data) =>
 
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const students = require("./database/students");
 const faculty = require("./database/faculty");
 const courses = require("./database/courses");
@@ -24,6 +26,25 @@ const courseFaculty = require("./database/courseFaculty");
 const app = express();
 const port = 8000;
 
+const adminEmail = (process.env.admin_email || process.env.ADMIN_EMAIL || "").trim();
+const adminPassword = (process.env.admin_password || process.env.ADMIN_PASSWORD || "").trim();
+const jwtSecret = (process.env.JWT_SECRET || "").trim();
+
+const authJwt = (req, res, next) => {
+  if (req.path === "/login" && req.method === "POST") return next();
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!token || !jwtSecret) {
+    return res.status(401).json({ message: "Authentication required" });
+  }
+  try {
+    jwt.verify(token, jwtSecret);
+    next();
+  } catch {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -31,6 +52,20 @@ app.use(
   }),
 );
 app.use(express.json());
+
+app.post("/api/login", (req, res) => {
+  const { email, password } = req.body || {};
+  if (!adminEmail || !adminPassword || !jwtSecret) {
+    return res.status(500).json({ message: "Server auth not configured" });
+  }
+  if (email !== adminEmail || password !== adminPassword) {
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+  const token = jwt.sign({ sub: email }, jwtSecret, { expiresIn: "7d" });
+  res.json({ token });
+});
+
+app.use("/api", authJwt);
 
 // Helper to map student to their faculty based on section
 const getStudentData = () => {
