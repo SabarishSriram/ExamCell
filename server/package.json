@@ -6,6 +6,11 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:db:push": "prisma db push",
+    "seed:students": "node scripts/seedStudentsFromSheets.js",
+    "seed:faculty": "node scripts/seedFaculty.js",
+    "seed:advisors": "node scripts/seedFacultyAdvisors.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,10 +18,14 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@prisma/client": "^6.0.0",
     "cors": "^2.8.5",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "fs": "^0.0.1-security",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "prisma": "^6.0.0"
   }
 }

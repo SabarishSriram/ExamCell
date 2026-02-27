@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Section {
+  code            String    @id
+  advisorEmpId    String?
+
+  advisor         Faculty?  @relation(fields: [advisorEmpId], references: [empId])
+  students        Student[]
+  examSections    ExamSection[]
+  reports         ExamReport[]
+  offerings       CourseOffering[]
+}
+
+model Student {
+  regNo          String   @id
+  name           String
+  sectionCode    String
+  specialization String?
+  phone          String?
+  email          String?
+
+  // Relations
+  section        Section  @relation(fields: [sectionCode], references: [code])
+  incidents      ReportStudentIncident[]
+}
+
+model Course {
+  code   String @id
+  name   String
+  type   String?  // e.g. Core/Elective
+  year   String?  // "1st Year", "2nd Year", etc.
+
+  offerings CourseOffering[]
+}
+
+model Faculty {
+  id        Int     @id @default(autoincrement())
+  empId     String  @unique
+  name      String
+  position  String?
+  mobile    String?
+  email     String?
+
+  offerings        CourseOffering[]
+  advisedSections  Section[]
+}
+
+/// Mapping of a course to a year/slot/section and faculty member teaching it
+model CourseOffering {
+  id          Int      @id @default(autoincrement())
+  yearLabel   String?  // "I_YEAR", "II_YEAR", "III_YEAR"
+  slot        String?
+
+  courseCode  String
+  facultyId   Int?
+  sectionCode String?
+
+  course   Course  @relation(fields: [courseCode], references: [code])
+  faculty  Faculty? @relation(fields: [facultyId], references: [id])
+  section  Section? @relation(fields: [sectionCode], references: [code])
+}
+
+model Exam {
+  id        String   @id           // existing string IDs from JSON
+  name      String
+  date      DateTime
+  fromTime  String
+  toTime    String
+  timeRange String
+  year      String?
+  venue     String?
+
+  sections  ExamSection[]
+  reports   ExamReport[]
+}
+
+/// Per-section information for an exam (to replace sections[] and venueBySection)
+model ExamSection {
+  id          Int     @id @default(autoincrement())
+  examId      String
+  sectionCode String
+  venue       String?
+
+  exam    Exam    @relation(fields: [examId], references: [id])
+  section Section @relation(fields: [sectionCode], references: [code])
+}
+
+model ExamReport {
+  id         String   @id          // existing string IDs from JSON
+  examId     String
+  examName   String
+  sectionCode String
+  submittedAt DateTime
+
+  exam     Exam    @relation(fields: [examId], references: [id])
+  section  Section @relation(fields: [sectionCode], references: [code])
+  students ReportStudentIncident[]
+}
+
+/// Individual student row inside a report (presence / malpractice etc.)
+model ReportStudentIncident {
+  id           Int     @id @default(autoincrement())
+  reportId     String
+  studentRegNo String?
+
+  name         String
+  isPresent    Boolean
+  activity     String?
+  remarks      String?
+  actionTaken  String?
+
+  report  ExamReport @relation(fields: [reportId], references: [id])
+  student Student?   @relation(fields: [studentRegNo], references: [regNo])
+}
+
