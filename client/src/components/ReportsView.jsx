@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { api } from "@/lib/api";
 import {
   Card,
   CardHeader,
@@ -75,7 +75,7 @@ const ReportsView = () => {
           try {
             await Promise.all(
               ids.map((id) =>
-                axios.delete(`http://localhost:8000/api/reports/${id}`),
+                api.delete(`/reports/${id}`),
               ),
             );
             setReports((prev) => prev.filter((r) => !ids.includes(r.id)));
@@ -103,11 +103,11 @@ const ReportsView = () => {
       try {
         const [reportsRes, examsRes, coursesRes, facultyRes, courseFacultyRes] =
           await Promise.all([
-            axios.get("http://localhost:8000/api/reports"),
-            axios.get("http://localhost:8000/api/exams"),
-            axios.get("http://localhost:8000/api/courses"),
-            axios.get("http://localhost:8000/api/faculty"),
-            axios.get("http://localhost:8000/api/course-faculty"),
+            api.get("/reports"),
+            api.get("/exams"),
+            api.get("/courses"),
+            api.get("/faculty"),
+            api.get("/course-faculty"),
           ]);
         setReports(reportsRes.data);
         setExams(examsRes.data);
@@ -335,10 +335,7 @@ const ReportsView = () => {
         ),
       };
 
-      await axios.put(
-        `http://localhost:8000/api/reports/${reportId}`,
-        updatedReport,
-      );
+      await api.put(`/reports/${reportId}`, updatedReport);
 
       setReports((prev) =>
         prev.map((r) => (r.id === reportId ? updatedReport : r)),

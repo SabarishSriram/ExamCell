@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -133,7 +133,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
           Object.values(venueBySection)[0] ||
           "",
       };
-      await axios.post(`http://localhost:8000/api/exams`, payload);
+      await api.post("/exams", payload);
       onSuccess();
       onClose();
       // Reset form

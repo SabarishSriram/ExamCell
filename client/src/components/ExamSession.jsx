@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { api } from "@/lib/api";
 import { Button } from "./ui/button";
 import {
   Table,
@@ -38,8 +38,8 @@ const ExamSession = () => {
     const fetchData = async () => {
       try {
         const [examRes, studentRes] = await Promise.all([
-          axios.get(`http://localhost:8000/api/exams`),
-          axios.get(`http://localhost:8000/api/students`),
+          api.get("/exams"),
+          api.get("/students"),
         ]);
 
         const currentExam = examRes.data.find((e) => e.id === examId);
@@ -87,7 +87,7 @@ const ExamSession = () => {
     };
 
     try {
-      await axios.post("http://localhost:8000/api/reports", reportData);
+      await api.post("/reports", reportData);
       toast.success("Report submitted successfully!");
       navigate("/");
     } catch (error) {

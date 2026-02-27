@@ -2,9 +2,9 @@ import React from "react";
 import { Button } from "./ui/button";
 import {
   Plus,
-  GraduationCap,
   ClipboardList,
   LayoutDashboard,
+  LogOut,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -66,6 +66,17 @@ const Navbar = ({ onAddExam }) => {
         </div>
 
         <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              sessionStorage.removeItem("token");
+              window.location.href = "/login";
+            }}
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
           <Button
             onClick={onAddExam}
             className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] h-11 px-6 rounded-xl"
