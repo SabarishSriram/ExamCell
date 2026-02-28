@@ -54,16 +54,16 @@ model Faculty {
 
 /// Mapping of a course to a year/slot/section and faculty member teaching it
 model CourseOffering {
-  id          Int      @id @default(autoincrement())
-  yearLabel   String?  // "I_YEAR", "II_YEAR", "III_YEAR"
-  slot        String?
+  id           Int      @id @default(autoincrement())
+  yearLabel    String?  // "I_YEAR", "II_YEAR", "III_YEAR"
+  slot         String?
 
-  courseCode  String
-  facultyId   Int?
-  sectionCode String?
+  courseCode   String
+  facultyEmpId String?
+  sectionCode  String?
 
-  course   Course  @relation(fields: [courseCode], references: [code])
-  faculty  Faculty? @relation(fields: [facultyId], references: [id])
+  course   Course   @relation(fields: [courseCode], references: [code])
+  faculty  Faculty? @relation(fields: [facultyEmpId], references: [empId])
   section  Section? @relation(fields: [sectionCode], references: [code])
 }
 
