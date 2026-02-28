@@ -14,16 +14,87 @@ const UG_SHEET = "UG Allocation";
 const FACULTY_SHEET = "Faculty Details";
 
 const COURSE_CODE_PATTERN = /^21[A-Z]{2,4}\d{3}[A-Z]?$/i;
+const SECTION_CODE_PATTERN = /^[A-Z]{1,2}\d$/i;
 
-function normalizeFacultyName(s) {
+function stripFacultyName(s) {
   if (!s || typeof s !== "string") return "";
   return String(s)
-    .replace(/\s+/g, " ")
-    .replace(/\s*(CC|CC lab|CC-Lab|Lab)\s*$/i, "")
+    .replace(/\s*(CC|CC lab|CC-Lab|CC Lab|Lab)\s*$/i, "")
+    .replace(/\s*\(\d+\)\s*$/, "")
+    .replace(/\s+\d+\s*$/, "")
     .trim();
 }
 
-function buildFacultyNameMap(sheet) {
+function canonicalize(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/^(dr\.?|ms\.?|mrs\.?|mr\.?)\s*/i, "")
+    .replace(/[.\-_,]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function tokenize(canon) {
+  return canon.split(/\s+/).filter((t) => t.length > 0);
+}
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+  return dp[m][n];
+}
+
+function findBestFacultyMatch(rawName, facultyList) {
+  const stripped = stripFacultyName(rawName);
+  const canon = canonicalize(stripped);
+  if (!canon) return null;
+  const tokens = tokenize(canon);
+
+  let bestEntry = null;
+  let bestScore = -1;
+
+  for (const entry of facultyList) {
+    const entryCanon = entry.canon;
+    const entryTokens = entry.tokens;
+
+    if (canon === entryCanon) return entry;
+
+    const shorter = tokens.length <= entryTokens.length ? tokens : entryTokens;
+    const longer = tokens.length <= entryTokens.length ? entryTokens : tokens;
+
+    let tokenMatches = 0;
+    for (const st of shorter) {
+      for (const lt of longer) {
+        if (st === lt || lt.includes(st) || st.includes(lt)) { tokenMatches++; break; }
+        if (st.length > 3 && lt.length > 3 && levenshtein(st, lt) <= 2) { tokenMatches++; break; }
+      }
+    }
+
+    const overlap = tokenMatches / Math.max(shorter.length, 1);
+    const nameDist = levenshtein(canon, entryCanon);
+    const maxLen = Math.max(canon.length, entryCanon.length, 1);
+    const similarity = 1 - nameDist / maxLen;
+
+    const score = overlap * 0.6 + similarity * 0.4;
+
+    if (score > bestScore) {
+      bestScore = score;
+      bestEntry = entry;
+    }
+  }
+
+  if (bestScore >= 0.65) return bestEntry;
+  return null;
+}
+
+function buildFacultyList(sheet) {
   const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
   let headerIdx = -1;
   for (let i = 0; i < Math.min(rows.length, 15); i++) {
@@ -33,17 +104,23 @@ function buildFacultyNameMap(sheet) {
       break;
     }
   }
-  if (headerIdx < 0) return new Map();
+  if (headerIdx < 0) return [];
 
-  const map = new Map();
+  const list = [];
   for (let r = headerIdx + 1; r < rows.length; r++) {
     const empId = rows[r][1];
     const name = rows[r][2];
-    if (!empId || !name) continue;
-    const n = normalizeFacultyName(String(name).trim());
-    if (n) map.set(n.toLowerCase(), { empId: String(empId).trim(), name: String(name).trim() });
+    if (!empId || !name || !String(name).trim()) continue;
+    const rawName = String(name).trim();
+    const canon = canonicalize(rawName);
+    list.push({
+      empId: String(empId).trim(),
+      name: rawName,
+      canon,
+      tokens: tokenize(canon),
+    });
   }
-  return map;
+  return list;
 }
 
 function extractSlot(str) {
@@ -150,8 +227,8 @@ function parseUGAllocation(sheet) {
         const sectionStr = String(section || "").trim();
         const facultyStr = String(faculty || "").trim();
 
-        if (!sectionStr || sectionStr.match(/^(ios students|nanotechnology|s\.no\.?)$/i)) continue;
-        if (sectionStr.match(/^[\d.]+$/) && !facultyStr) continue;
+        if (!sectionStr) continue;
+        if (!SECTION_CODE_PATTERN.test(sectionStr)) continue;
 
         const key = `${block.code}-${sectionStr}`;
         if (seenSections.has(key)) continue;
@@ -178,40 +255,42 @@ function parseUGAllocation(sheet) {
   return result;
 }
 
-async function seedFromParsed(parsed, facultyNameMap) {
-  const stats = { courses: 0, sections: 0, faculty: 0, offerings: 0 };
-  const facultyByNormName = new Map();
+async function seedFromParsed(parsed, facultyList) {
+  const stats = { courses: 0, sections: 0, faculty: 0, offerings: 0, matched: 0, unmatched: [] };
+  const facultyCache = new Map();
   let unknownFacultyCounter = 0;
 
   const getOrCreateFaculty = async (rawName) => {
     if (!rawName || !String(rawName).trim()) return null;
-    const norm = normalizeFacultyName(rawName);
-    const key = norm.toLowerCase();
-    if (facultyByNormName.has(key)) return facultyByNormName.get(key);
+    const stripped = stripFacultyName(rawName);
+    const cacheKey = canonicalize(stripped);
+    if (!cacheKey) return null;
+    if (facultyCache.has(cacheKey)) return facultyCache.get(cacheKey);
 
-    const fromSheet = facultyNameMap.get(key);
+    const match = findBestFacultyMatch(rawName, facultyList);
     let faculty;
-    if (fromSheet) {
+    if (match) {
       faculty = await prisma.faculty.upsert({
-        where: { empId: fromSheet.empId },
-        update: { name: fromSheet.name },
-        create: {
-          empId: fromSheet.empId,
-          name: fromSheet.name,
-        },
+        where: { empId: match.empId },
+        update: { name: match.name },
+        create: { empId: match.empId, name: match.name },
       });
+      stats.matched++;
     } else {
       unknownFacultyCounter++;
       const empId = `UGALOC_${String(unknownFacultyCounter).padStart(4, "0")}`;
       faculty = await prisma.faculty.upsert({
         where: { empId },
-        update: { name: norm },
-        create: { empId, name: norm },
+        update: { name: stripped },
+        create: { empId, name: stripped },
       });
+      stats.unmatched.push(stripped);
     }
-    facultyByNormName.set(key, faculty);
+    facultyCache.set(cacheKey, faculty);
     return faculty;
   };
+
+  await prisma.courseOffering.deleteMany({});
 
   const yearLabels = { I_YEAR: "1st Year", II_YEAR: "2nd Year", III_YEAR: "3rd Year" };
 
@@ -242,7 +321,7 @@ async function seedFromParsed(parsed, facultyNameMap) {
         if (!stats.sections) stats.sections = await prisma.section.count();
 
         const faculty = entry.faculty ? await getOrCreateFaculty(entry.faculty) : null;
-        if (faculty) stats.faculty = Math.max(stats.faculty, facultyByNormName.size);
+        if (faculty) stats.faculty = Math.max(stats.faculty, facultyCache.size);
 
         const existing = await prisma.courseOffering.findFirst({
           where: { courseCode: course.code, sectionCode, yearLabel },
@@ -292,8 +371,8 @@ async function main() {
     process.exit(1);
   }
 
-  const facultyNameMap = facultySheet ? buildFacultyNameMap(facultySheet) : new Map();
-  console.log(`Faculty Details: ${facultyNameMap.size} names for lookup`);
+  const facultyList = facultySheet ? buildFacultyList(facultySheet) : [];
+  console.log(`Faculty Details: ${facultyList.length} names for lookup`);
 
   const parsed = parseUGAllocation(ugSheet);
   const totalCourses = Object.values(parsed).reduce((sum, c) => sum + Object.keys(c).length, 0);
@@ -309,8 +388,11 @@ async function main() {
   }
 
   try {
-    const stats = await seedFromParsed(parsed, facultyNameMap);
-    console.log("Seeded:", stats);
+    const stats = await seedFromParsed(parsed, facultyList);
+    console.log("Seeded:", { courses: stats.courses, sections: stats.sections, matched: stats.matched, offerings: stats.offerings });
+    if (stats.unmatched.length > 0) {
+      console.log("Unmatched faculty (created with UGALOC_ IDs):", stats.unmatched);
+    }
     console.log("Done.");
   } finally {
     await prisma.$disconnect();
