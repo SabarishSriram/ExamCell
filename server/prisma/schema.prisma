@@ -11,7 +11,7 @@ model Section {
   code            String    @id
   advisorEmpId    String?
 
-  advisor         Faculty?  @relation(fields: [advisorEmpId], references: [empId])
+  advisor         Faculty?  @relation(fields: [advisorEmpId], references: [empId], onDelete: SetNull)
   students        Student[]
   examSections    ExamSection[]
   reports         ExamReport[]
@@ -27,7 +27,7 @@ model Student {
   email          String?
 
   // Relations
-  section        Section  @relation(fields: [sectionCode], references: [code])
+  section        Section  @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
   incidents      ReportStudentIncident[]
 }
 
@@ -62,9 +62,9 @@ model CourseOffering {
   facultyEmpId String?
   sectionCode  String?
 
-  course   Course   @relation(fields: [courseCode], references: [code])
-  faculty  Faculty? @relation(fields: [facultyEmpId], references: [empId])
-  section  Section? @relation(fields: [sectionCode], references: [code])
+  course   Course   @relation(fields: [courseCode], references: [code], onDelete: Cascade)
+  faculty  Faculty? @relation(fields: [facultyEmpId], references: [empId], onDelete: SetNull)
+  section  Section? @relation(fields: [sectionCode], references: [code], onDelete: SetNull)
 }
 
 model Exam {
@@ -88,8 +88,8 @@ model ExamSection {
   sectionCode String
   venue       String?
 
-  exam    Exam    @relation(fields: [examId], references: [id])
-  section Section @relation(fields: [sectionCode], references: [code])
+  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  section Section @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
 }
 
 model ExamReport {
@@ -99,8 +99,8 @@ model ExamReport {
   sectionCode String
   submittedAt DateTime
 
-  exam     Exam    @relation(fields: [examId], references: [id])
-  section  Section @relation(fields: [sectionCode], references: [code])
+  exam     Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  section  Section @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
   students ReportStudentIncident[]
 }
 
@@ -108,6 +108,7 @@ model ExamReport {
 model ReportStudentIncident {
   id           Int     @id @default(autoincrement())
   reportId     String
+  regNo        String?
   studentRegNo String?
 
   name         String
@@ -116,7 +117,7 @@ model ReportStudentIncident {
   remarks      String?
   actionTaken  String?
 
-  report  ExamReport @relation(fields: [reportId], references: [id])
-  student Student?   @relation(fields: [studentRegNo], references: [regNo])
+  report  ExamReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  student Student?   @relation(fields: [studentRegNo], references: [regNo], onDelete: SetNull)
 }
 

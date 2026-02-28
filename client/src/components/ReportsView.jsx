@@ -474,13 +474,13 @@ const ReportsView = () => {
                     </div>
 
                     <div className="flex gap-4 items-center">
-                      <div className="flex items-center gap-2 bg-rose-50 px-4 py-2 rounded-xl border border-rose-100 shadow-sm">
+                      <div className="flex items-center gap-2  px-4 py-2   border-rose-100 ">
                         <UserX className="w-4 h-4 text-rose-500" />
                         <span className="text-rose-700 font-bold text-sm tracking-tight">
                           {absentees.length} Absent
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-xl border border-amber-100 shadow-sm">
+                      <div className="flex items-center gap-2  px-4 py-2   border-amber-100 ">
                         <AlertTriangle className="w-4 h-4 text-amber-500" />
                         <span className="text-amber-700 font-bold text-sm tracking-tight">
                           {malpractices.length} Reported
@@ -571,15 +571,15 @@ const ReportsView = () => {
                             <TableCell className="text-center">
                               {!s.isPresent ? (
                                 <Badge
-                                  variant="destructive"
-                                  className="font-black bg-rose-500 shadow-lg shadow-rose-200"
+                                  variant="outline"
+                                  className="text-red-600 border-red-200 bg-red-50"
                                 >
                                   ABSENT
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="text-emerald-600 border-emerald-200 bg-emerald-50 font-black"
+                                  className="text-emerald-600 border-emerald-200 bg-emerald-50"
                                 >
                                   PRESENT
                                 </Badge>
