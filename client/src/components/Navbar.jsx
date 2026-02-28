@@ -1,17 +1,20 @@
 import React from "react";
 import { Button } from "./ui/button";
-import {
-  Plus,
-  GraduationCap,
-  ClipboardList,
-  LayoutDashboard,
-} from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Plus, ClipboardList, LayoutDashboard, LogOut } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = ({ onAddExam }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const isActive = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <nav className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
@@ -21,14 +24,11 @@ const Navbar = ({ onAddExam }) => {
             to="/"
             className="flex items-center gap-3 decoration-transparent"
           >
-            {/* <div className="bg-primary/10 p-2.5 rounded-xl border border-primary/20"> */}
-              {/* <GraduationCap className="w-7 h-7 text-primary" /> */}
-              <img
-                src="https://scet.berkeley.edu/wp-content/uploads/8.-SRM-Logo.png"
-                alt=""
-                className="w-10 h-10"
-              />
-            {/* </div> */}
+            <img
+              src="https://scet.berkeley.edu/wp-content/uploads/8.-SRM-Logo.png"
+              alt=""
+              className="w-10 h-10"
+            />
             <div>
               <h1 className="text-xl font-bold tracking-tight text-slate-900 leading-none">
                 ExamCell
@@ -65,7 +65,7 @@ const Navbar = ({ onAddExam }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Button
             onClick={onAddExam}
             className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] h-11 px-6 rounded-xl"
@@ -73,6 +73,21 @@ const Navbar = ({ onAddExam }) => {
             <Plus className="w-5 h-5" />
             <span className="font-semibold text-sm">Create Exam</span>
           </Button>
+
+          {user && (
+            <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
+              <span className="hidden sm:block text-xs font-semibold text-slate-500 max-w-[160px] truncate">
+                {user.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                title="Sign out"
+                className="p-2.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

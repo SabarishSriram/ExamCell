@@ -12,6 +12,7 @@
     "seed:faculty": "node scripts/seedFaculty.js",
     "seed:advisors": "node scripts/seedFacultyAdvisors.js",
     "seed:courses": "node scripts/parseCourses.js",
+    "seed:admin": "node scripts/seedAdmin.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -20,9 +21,11 @@
   "type": "commonjs",
   "dependencies": {
     "@prisma/client": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "express": "^5.2.1",
     "fs": "^0.0.1-security",
+    "jsonwebtoken": "^9.0.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

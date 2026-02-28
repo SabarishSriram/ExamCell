@@ -1,9 +1,13 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const prisma = require("./prisma/prismaClient");
 
 const app = express();
 const port = 8000;
+
+const JWT_SECRET = process.env.JWT_SECRET || "examcell-secret-key-change-in-production";
 
 app.use(
   cors({
@@ -13,9 +17,69 @@ app.use(
 );
 app.use(express.json());
 
+// ─── Auth Middleware ──────────────────────────────────────────────────────────
+
+function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const token = authHeader.slice(7);
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+}
+
+// ─── Auth Routes ─────────────────────────────────────────────────────────────
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const valid = await bcrypt.compare(password, user.passwordHash);
+    if (!valid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.json({ token, user: { id: user.id, email: user.email } });
+  } catch (err) {
+    console.error("POST /api/auth/login error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/api/auth/me", requireAuth, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { id: true, email: true },
+    });
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    res.json({ user });
+  } catch (err) {
+    console.error("GET /api/auth/me error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // ─── Students ────────────────────────────────────────────────────────────────
 
-app.get("/api/students", async (req, res) => {
+app.get("/api/students", requireAuth, async (req, res) => {
   try {
     const students = await prisma.student.findMany({
       include: {
@@ -43,7 +107,7 @@ app.get("/api/students", async (req, res) => {
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-app.get("/api/sections", async (req, res) => {
+app.get("/api/sections", requireAuth, async (req, res) => {
   try {
     const sections = await prisma.section.findMany({ select: { code: true } });
     res.json(sections.map((s) => s.code));
@@ -55,7 +119,7 @@ app.get("/api/sections", async (req, res) => {
 
 // ─── Courses ─────────────────────────────────────────────────────────────────
 
-app.get("/api/courses", async (req, res) => {
+app.get("/api/courses", requireAuth, async (req, res) => {
   try {
     const courses = await prisma.course.findMany();
     res.json(
@@ -80,7 +144,7 @@ const YEAR_LABEL_TO_KEY = {
   "3rd Year": "III_YEAR",
 };
 
-app.get("/api/course-faculty", async (req, res) => {
+app.get("/api/course-faculty", requireAuth, async (req, res) => {
   try {
     const offerings = await prisma.courseOffering.findMany({
       include: { course: true, faculty: true },
@@ -113,7 +177,7 @@ app.get("/api/course-faculty", async (req, res) => {
 
 // ─── Faculty (section advisors) ──────────────────────────────────────────────
 
-app.get("/api/faculty", async (req, res) => {
+app.get("/api/faculty", requireAuth, async (req, res) => {
   try {
     const sections = await prisma.section.findMany({
       where: { advisorEmpId: { not: null } },
@@ -153,7 +217,7 @@ function formatExam(exam) {
   };
 }
 
-app.get("/api/exams", async (req, res) => {
+app.get("/api/exams", requireAuth, async (req, res) => {
   try {
     const exams = await prisma.exam.findMany({ include: { sections: true } });
     res.json(exams.map(formatExam));
@@ -163,7 +227,7 @@ app.get("/api/exams", async (req, res) => {
   }
 });
 
-app.post("/api/exams", async (req, res) => {
+app.post("/api/exams", requireAuth, async (req, res) => {
   try {
     const { course, date, time, from, to, year, sections, venueBySection, venue } = req.body;
     const id = Date.now().toString();
@@ -195,7 +259,7 @@ app.post("/api/exams", async (req, res) => {
   }
 });
 
-app.put("/api/exams/:id", async (req, res) => {
+app.put("/api/exams/:id", requireAuth, async (req, res) => {
   try {
     const { course, date, time, from, to, year, sections, venueBySection, venue } = req.body;
 
@@ -231,7 +295,7 @@ app.put("/api/exams/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/exams/:id", async (req, res) => {
+app.delete("/api/exams/:id", requireAuth, async (req, res) => {
   try {
     const examId = req.params.id;
     await prisma.reportStudentIncident.deleteMany({
@@ -268,7 +332,7 @@ function formatReport(report) {
   };
 }
 
-app.get("/api/reports", async (req, res) => {
+app.get("/api/reports", requireAuth, async (req, res) => {
   try {
     const reports = await prisma.examReport.findMany({
       include: { students: true },
@@ -280,7 +344,7 @@ app.get("/api/reports", async (req, res) => {
   }
 });
 
-app.post("/api/reports", async (req, res) => {
+app.post("/api/reports", requireAuth, async (req, res) => {
   try {
     const { examId, examName, section, students } = req.body;
     const id = Date.now().toString();
@@ -320,7 +384,7 @@ app.post("/api/reports", async (req, res) => {
   }
 });
 
-app.put("/api/reports/:id", async (req, res) => {
+app.put("/api/reports/:id", requireAuth, async (req, res) => {
   try {
     const existing = await prisma.examReport.findUnique({
       where: { id: req.params.id },
@@ -365,7 +429,7 @@ app.put("/api/reports/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/reports/:id", async (req, res) => {
+app.delete("/api/reports/:id", requireAuth, async (req, res) => {
   try {
     await prisma.reportStudentIncident.deleteMany({
       where: { reportId: req.params.id },

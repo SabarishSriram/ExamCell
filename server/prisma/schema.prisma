@@ -104,6 +104,13 @@ model ExamReport {
   students ReportStudentIncident[]
 }
 
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
 /// Individual student row inside a report (presence / malpractice etc.)
 model ReportStudentIncident {
   id           Int     @id @default(autoincrement())
