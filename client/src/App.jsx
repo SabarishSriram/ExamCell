@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { format, isSameDay } from "date-fns";
 import Navbar from "./components/Navbar";
 import AddExamModal from "./components/AddExamModal";
@@ -238,7 +243,10 @@ function AppRoutes() {
       {user && <Navbar onAddExam={() => setIsAddModalOpen(true)} />}
 
       <Routes>
-        <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" replace /> : <Login />}
+        />
         <Route
           path="/"
           element={

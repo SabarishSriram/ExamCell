@@ -7,16 +7,16 @@ const prisma = require("./prisma/prismaClient");
 const app = express();
 const port = 8000;
 
-const JWT_SECRET = process.env.JWT_SECRET || "examcell-secret-key-change-in-production";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "examcell-secret-key-change-in-production";
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173", "http://192.168.0.104:5173"],
     credentials: true,
   }),
 );
 app.use(express.json());
-
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 
 function requireAuth(req, res, next) {
@@ -39,7 +39,9 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Email and password are required" });
     }
 
     const user = await prisma.user.findUnique({ where: { email } });
@@ -229,7 +231,17 @@ app.get("/api/exams", requireAuth, async (req, res) => {
 
 app.post("/api/exams", requireAuth, async (req, res) => {
   try {
-    const { course, date, time, from, to, year, sections, venueBySection, venue } = req.body;
+    const {
+      course,
+      date,
+      time,
+      from,
+      to,
+      year,
+      sections,
+      venueBySection,
+      venue,
+    } = req.body;
     const id = Date.now().toString();
 
     const exam = await prisma.exam.create({
@@ -261,9 +273,21 @@ app.post("/api/exams", requireAuth, async (req, res) => {
 
 app.put("/api/exams/:id", requireAuth, async (req, res) => {
   try {
-    const { course, date, time, from, to, year, sections, venueBySection, venue } = req.body;
+    const {
+      course,
+      date,
+      time,
+      from,
+      to,
+      year,
+      sections,
+      venueBySection,
+      venue,
+    } = req.body;
 
-    const existing = await prisma.exam.findUnique({ where: { id: req.params.id } });
+    const existing = await prisma.exam.findUnique({
+      where: { id: req.params.id },
+    });
     if (!existing) return res.status(404).json({ message: "Exam not found" });
 
     await prisma.examSection.deleteMany({ where: { examId: req.params.id } });
@@ -306,7 +330,8 @@ app.delete("/api/exams/:id", requireAuth, async (req, res) => {
     await prisma.exam.delete({ where: { id: examId } });
     res.status(204).end();
   } catch (err) {
-    if (err.code === "P2025") return res.status(404).json({ message: "Exam not found" });
+    if (err.code === "P2025")
+      return res.status(404).json({ message: "Exam not found" });
     console.error("DELETE /api/exams/:id error:", err);
     res.status(500).json({ message: "Internal server error" });
   }
@@ -437,7 +462,8 @@ app.delete("/api/reports/:id", requireAuth, async (req, res) => {
     await prisma.examReport.delete({ where: { id: req.params.id } });
     res.status(204).end();
   } catch (err) {
-    if (err.code === "P2025") return res.status(404).json({ message: "Report not found" });
+    if (err.code === "P2025")
+      return res.status(404).json({ message: "Report not found" });
     console.error("DELETE /api/reports/:id error:", err);
     res.status(500).json({ message: "Internal server error" });
   }

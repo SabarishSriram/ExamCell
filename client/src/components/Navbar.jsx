@@ -18,15 +18,15 @@ const Navbar = ({ onAddExam }) => {
 
   return (
     <nav className="border-b bg-white/80 backdrop-blur-md sticky top-0 z-50">
-      <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-        <div className="flex items-center gap-10">
+      <div className="container mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+        <div className="flex items-center gap-4 sm:gap-10">
           <Link
             to="/"
             className="flex items-center gap-3 decoration-transparent"
           >
             <img
-              src="https://scet.berkeley.edu/wp-content/uploads/8.-SRM-Logo.png"
-              alt=""
+              src="https://www.qdcsrmist.in/images/nwc.png"
+              alt="SRM Logo"
               className="w-10 h-10"
             />
             <div>

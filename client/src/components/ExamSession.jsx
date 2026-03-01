@@ -97,15 +97,21 @@ const ExamSession = () => {
   };
 
   if (loading)
-    return <div className="p-20 text-center">Loading Session...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50/50 px-4">
+        <div className="text-sm font-medium text-slate-600">
+          Loading Session...
+        </div>
+      </div>
+    );
 
   const currentVenue = exam?.venueBySection?.[sectionId] || exam?.venue || "";
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-20">
       <div className="bg-white border-b sticky top-0 z-40">
-        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto px-4 sm:px-6 h-auto sm:h-20 py-3 sm:py-0 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 sm:gap-4">
             <Button
               variant="ghost"
               size="icon"
@@ -138,7 +144,7 @@ const ExamSession = () => {
           </div>
           <Button
             onClick={handleSubmit}
-            className="gap-2 bg-primary shadow-lg shadow-primary/20"
+            className="gap-2 bg-primary shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
           >
             <Save className="w-4 h-4" />
             Submit Reports
@@ -146,7 +152,7 @@ const ExamSession = () => {
         </div>
       </div>
 
-      <main className="container mx-auto py-8 px-6">
+      <main className="container mx-auto py-6 px-4 sm:px-6">
         <Card className="border-slate-200/60 shadow-xl shadow-slate-200/20 overflow-hidden bg-white">
           <CardHeader className="bg-slate-50/50 border-b py-4">
             <CardTitle className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
@@ -155,105 +161,111 @@ const ExamSession = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50/30">
-                  <TableHead className="w-[80px] text-center">
-                    Present
-                  </TableHead>
-                  <TableHead className="w-[150px]">Reg NO</TableHead>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead className="w-[200px]">
-                    Activity / Incident
-                  </TableHead>
-                  <TableHead>Remarks</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow
-                    key={student.RegNO}
-                    className={!attendance[student.RegNO] ? "bg-red-50/30" : ""}
-                  >
-                    <TableCell className="text-center">
-                      <Checkbox
-                        checked={attendance[student.RegNO]}
-                        onCheckedChange={(val) => {
-                          const isPresent = val === true;
-                          setAttendance((prev) => ({
-                            ...prev,
-                            [student.RegNO]: isPresent,
-                          }));
-                          if (!isPresent) {
+            <div className="w-full overflow-x-auto">
+              <Table className="min-w-[720px] text-xs">
+                <TableHeader>
+                  <TableRow className="bg-slate-50/30">
+                    <TableHead className="w-[80px] text-center">
+                      Present
+                    </TableHead>
+                    <TableHead className="w-[150px]">Reg NO</TableHead>
+                    <TableHead>Student Name</TableHead>
+                    <TableHead className="w-[200px]">
+                      Activity / Incident
+                    </TableHead>
+                    <TableHead>Remarks</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {students.map((student) => (
+                    <TableRow
+                      key={student.RegNO}
+                      className={
+                        !attendance[student.RegNO] ? "bg-red-50/30" : ""
+                      }
+                    >
+                      <TableCell className="text-center">
+                        <Checkbox
+                          checked={attendance[student.RegNO]}
+                          onCheckedChange={(val) => {
+                            const isPresent = val === true;
+                            setAttendance((prev) => ({
+                              ...prev,
+                              [student.RegNO]: isPresent,
+                            }));
+                            if (!isPresent) {
+                              setActivities((prev) => ({
+                                ...prev,
+                                [student.RegNO]: "None",
+                              }));
+                            }
+                          }}
+                          className="mx-auto"
+                        />
+                      </TableCell>
+                      <TableCell className="font-mono text-xs font-bold text-slate-500">
+                        {student.RegNO}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-bold text-slate-800">
+                          {student.Name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-medium">
+                          {student.Specialization}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={activities[student.RegNO]}
+                          onValueChange={(val) =>
                             setActivities((prev) => ({
                               ...prev,
-                              [student.RegNO]: "None",
-                            }));
+                              [student.RegNO]: val,
+                            }))
                           }
-                        }}
-                        className="mx-auto"
-                      />
-                    </TableCell>
-                    <TableCell className="font-mono text-xs font-bold text-slate-500">
-                      {student.RegNO}
-                    </TableCell>
-                    <TableCell>
-                      <div className="font-bold text-slate-800">
-                        {student.Name}
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-medium">
-                        {student.Specialization}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={activities[student.RegNO]}
-                        onValueChange={(val) =>
-                          setActivities((prev) => ({
-                            ...prev,
-                            [student.RegNO]: val,
-                          }))
-                        }
-                      >
-                        <SelectTrigger
-                          className="h-9 text-xs font-semibold bg-white"
-                          disabled={!attendance[student.RegNO]}
                         >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="None">None (Clear)</SelectItem>
-                          <SelectItem value="Bit Material">
-                            Bit Material
-                          </SelectItem>
-                          <SelectItem value="Mobile Phone">
-                            Mobile Phone
-                          </SelectItem>
-                          <SelectItem value="Late Arrival">
-                            Late Arrival
-                          </SelectItem>
-                          <SelectItem value="Dress Code">Dress Code</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        placeholder="Additional details..."
-                        value={remarks[student.RegNO]}
-                        disabled={!attendance[student.RegNO]}
-                        onChange={(e) =>
-                          setRemarks((prev) => ({
-                            ...prev,
-                            [student.RegNO]: e.target.value,
-                          }))
-                        }
-                        className="h-9 text-xs bg-white border-slate-200"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                          <SelectTrigger
+                            className="h-9 text-xs font-semibold bg-white"
+                            disabled={!attendance[student.RegNO]}
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="None">None (Clear)</SelectItem>
+                            <SelectItem value="Bit Material">
+                              Bit Material
+                            </SelectItem>
+                            <SelectItem value="Mobile Phone">
+                              Mobile Phone
+                            </SelectItem>
+                            <SelectItem value="Late Arrival">
+                              Late Arrival
+                            </SelectItem>
+                            <SelectItem value="Dress Code">
+                              Dress Code
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          placeholder="Additional details..."
+                          value={remarks[student.RegNO]}
+                          disabled={!attendance[student.RegNO]}
+                          onChange={(e) =>
+                            setRemarks((prev) => ({
+                              ...prev,
+                              [student.RegNO]: e.target.value,
+                            }))
+                          }
+                          className="h-9 text-xs bg-white border-slate-200"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </main>
