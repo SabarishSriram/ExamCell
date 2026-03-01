@@ -22,7 +22,8 @@ export default function Login() {
       await login(email, password);
       navigate("/", { replace: true });
     } catch (err) {
-      const message = err.response?.data?.message || "Login failed. Please try again.";
+      const message =
+        err.response?.data?.message || "Login failed. Please try again.";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -36,7 +37,7 @@ export default function Login() {
           <div className="flex flex-col items-center mb-10">
             <div className="flex items-center gap-3 mb-6">
               <img
-                src="https://scet.berkeley.edu/wp-content/uploads/8.-SRM-Logo.png"
+                src="https://www.qdcsrmist.in/images/nwc.png"
                 alt="SRM Logo"
                 className="w-12 h-12"
               />
@@ -60,7 +61,10 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-semibold text-slate-700">
+              <Label
+                htmlFor="email"
+                className="text-sm font-semibold text-slate-700"
+              >
                 Email Address
               </Label>
               <div className="relative">
@@ -78,7 +82,10 @@ export default function Login() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold text-slate-700">
+              <Label
+                htmlFor="password"
+                className="text-sm font-semibold text-slate-700"
+              >
                 Password
               </Label>
               <div className="relative">
@@ -98,7 +105,11 @@ export default function Login() {
                   className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>

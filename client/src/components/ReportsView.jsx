@@ -353,10 +353,16 @@ const ReportsView = () => {
   };
 
   if (loading)
-    return <div className="p-20 text-center">Loading Reports...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50/30 px-4">
+        <div className="text-sm font-medium text-slate-600">
+          Loading Reports...
+        </div>
+      </div>
+    );
 
   return (
-    <div className="container mx-auto py-12 px-6 space-y-10">
+    <div className="container mx-auto py-8 px-4 sm:py-12 sm:px-6 space-y-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight mb-2">
@@ -436,7 +442,7 @@ const ReportsView = () => {
       </div>
 
       {reportRows.length === 0 ? (
-        <div className="text-center py-32 bg-white/50 backdrop-blur-sm rounded-3xl border-2 border-dashed border-slate-200/60">
+        <div className="text-center py-16 sm:py-32 bg-white/50 backdrop-blur-sm rounded-3xl border-2 border-dashed border-slate-200/60">
           <ClipboardList className="w-12 h-12 text-slate-200 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-slate-800">No Reports Found</h3>
           <p className="text-slate-500 max-w-xs mx-auto font-medium">
