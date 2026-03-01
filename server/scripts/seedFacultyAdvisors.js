@@ -26,6 +26,25 @@ const SHEET_NAME = "FA Details";
 const MATCH_THRESHOLD = 0.9;
 const SECTION_PATTERN = /^[A-Z]{1,2}[12]$/;
 
+/**
+ * Extract 2-digit year from a registration number like RA2411028010001 → "24"
+ */
+function extractYearFromRegNo(regNo) {
+  if (!regNo) return null;
+  const match = String(regNo).match(/RA(\d{2})/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * Suffix a section code with the year extracted from a reg number.
+ * e.g. ("U1", "24") → "U1-24"
+ */
+function suffixSectionWithYear(sectionCode, year) {
+  if (!year || !sectionCode) return sectionCode;
+  if (sectionCode.endsWith(`-${year}`)) return sectionCode;
+  return `${sectionCode}-${year}`;
+}
+
 // ── Dice coefficient (bigram similarity) ────────────────────────────
 
 function getBigrams(str) {
@@ -65,6 +84,7 @@ function parseFASheet(sheet) {
 
   const entries = [];
   let faColIdx = 5; // default for I yr / II yr blocks (no header row)
+  let regNoFromColIdx = null; // column index for "Reg No From"
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
@@ -72,10 +92,14 @@ function parseFASheet(sheet) {
     // Detect header rows that explicitly label "Faculty Advisor"
     let isHeader = false;
     for (let j = 0; j < row.length; j++) {
-      if (String(row[j]).toLowerCase().trim() === "faculty advisor") {
+      const cellVal = String(row[j]).toLowerCase().trim();
+      if (cellVal === "faculty advisor") {
         faColIdx = j;
         isHeader = true;
-        break;
+      }
+      // Also detect "Reg No From" column
+      if (cellVal.includes("reg") && cellVal.includes("from")) {
+        regNoFromColIdx = j;
       }
     }
     if (isHeader) continue;
@@ -86,7 +110,22 @@ function parseFASheet(sheet) {
     const faName = String(row[faColIdx] || "").trim();
     if (!faName) continue;
 
-    entries.push({ sectionCode, faName });
+    // Try to extract year from reg no columns (after FA column)
+    let year = null;
+    if (regNoFromColIdx !== null) {
+      year = extractYearFromRegNo(String(row[regNoFromColIdx] || ""));
+    }
+    // Fallback: scan columns after FA for any RA\d{2} pattern
+    if (!year) {
+      for (let j = faColIdx + 1; j < row.length; j++) {
+        const cellStr = String(row[j] || "").trim();
+        year = extractYearFromRegNo(cellStr);
+        if (year) break;
+      }
+    }
+
+    const suffixedSection = suffixSectionWithYear(sectionCode, year);
+    entries.push({ sectionCode: suffixedSection, faName });
   }
 
   return entries;
