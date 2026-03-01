@@ -16,6 +16,28 @@ const FACULTY_SHEET = "Faculty Details";
 const COURSE_CODE_PATTERN = /^21[A-Z]{2,4}\d{3}[A-Z]?$/i;
 const SECTION_CODE_PATTERN = /^[A-Z]{1,2}\d$/i;
 
+/**
+ * Extract the starting academic year from the data filename.
+ * e.g. "Course alloc-FA-25-26 EVEN.xlsx" → 25
+ */
+function extractAcademicYear() {
+  const match = path.basename(DATA_FILE).match(/(\d{2})-(\d{2})/)
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * Compute 2-digit admission year for a given year level.
+ * In academic year 25-26: I Year admitted 25, II Year admitted 24, III Year admitted 23
+ */
+function getAdmissionYearSuffix(yearKey) {
+  const acadYear = extractAcademicYear();
+  if (!acadYear) return null;
+  const offsets = { I_YEAR: 0, II_YEAR: 1, III_YEAR: 2, IV_YEAR: 3 };
+  const offset = offsets[yearKey];
+  if (offset === undefined) return null;
+  return String(acadYear - offset).padStart(2, '0');
+}
+
 function stripFacultyName(s) {
   if (!s || typeof s !== "string") return "";
   return String(s)
@@ -310,15 +332,19 @@ async function seedFromParsed(parsed, facultyList) {
 
       const entries = course.data || course.sections || [];
       for (const entry of entries) {
-        const sectionCode = entry.section;
-        if (!sectionCode) continue;
+        const rawSection = entry.section;
+        if (!rawSection) continue;
 
+        // Suffix section with admission year (e.g. U1 → U1-24)
+        const yearSuffix = getAdmissionYearSuffix(yearKey);
+        const sectionCode = yearSuffix ? `${rawSection}-${yearSuffix}` : rawSection;
+
+        // Ensure the suffixed section exists
         await prisma.section.upsert({
           where: { code: sectionCode },
           update: {},
           create: { code: sectionCode },
         });
-        if (!stats.sections) stats.sections = await prisma.section.count();
 
         const faculty = entry.faculty ? await getOrCreateFaculty(entry.faculty) : null;
         if (faculty) stats.faculty = Math.max(stats.faculty, facultyCache.size);

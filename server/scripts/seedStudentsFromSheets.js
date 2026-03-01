@@ -7,6 +7,27 @@ const DATA_FILE = path.join(__dirname, "..", "data", "2nd Year.xlsx");
 // Section codes we expect (for extracting from combined strings)
 const SECTION_PATTERN = /\b(U1|U2|V1|V2|W1|W2|X1|X2|Y1|Y2|Z1|Z2|AA1|AA2|T1|T2|S1|S2|R1|R2|P1|P2|Q1|Q2|AH1|AH2|AI1|AI2|AJ1|AJ2|AK1|AK2|AL1|AL2|AO1|AP1|AC2|AD2|AE2)\b/i;
 
+/**
+ * Extract 2-digit year from a registration number like RA2411028010001 → "24"
+ */
+function extractYearFromRegNo(regNo) {
+  if (!regNo) return null;
+  const match = String(regNo).match(/^RA(\d{2})/i);
+  return match ? match[1] : null;
+}
+
+/**
+ * Suffix a section code with the year extracted from a reg number.
+ * e.g. ("U1", "RA2411028010001") → "U1-24"
+ */
+function suffixSectionWithYear(sectionCode, regNo) {
+  const year = extractYearFromRegNo(regNo);
+  if (!year || !sectionCode) return sectionCode;
+  // Avoid double-suffixing
+  if (sectionCode.endsWith(`-${year}`)) return sectionCode;
+  return `${sectionCode}-${year}`;
+}
+
 function normalizeKey(key) {
   return String(key || "").toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -144,7 +165,8 @@ function parseSheet(sheet, sheetName) {
     if (!section && defaultSection) section = defaultSection;
     if (!regNo || !name) continue;
 
-    const sectionCode = section || defaultSection || "UNKNOWN";
+    const rawSection = section || defaultSection || "UNKNOWN";
+    const sectionCode = suffixSectionWithYear(rawSection, regNo);
     rows.push({
       regNo: String(regNo).trim(),
       name: String(name).trim(),
