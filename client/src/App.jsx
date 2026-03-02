@@ -34,8 +34,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Calendar as CalendarIcon, MapPin, GraduationCap } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:8000/api";
-
 const Dashboard = ({
   exams,
   courses,
@@ -199,9 +197,9 @@ function AppRoutes() {
   const fetchData = async () => {
     try {
       const [examsRes, coursesRes, sectionsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/exams`),
-        axios.get(`${API_BASE_URL}/courses`),
-        axios.get(`${API_BASE_URL}/sections`),
+        api.get("/exams"),
+        api.get("/courses"),
+        api.get("/sections"),
       ]);
       setExams(examsRes.data);
       setCourses(coursesRes.data);
@@ -221,7 +219,7 @@ function AppRoutes() {
         label: "Delete",
         onClick: async () => {
           try {
-            await axios.delete(`${API_BASE_URL}/exams/${examId}`);
+            await api.delete(`/exams/${examId}`);
             await fetchData();
             toast.success("Exam deleted successfully");
           } catch (error) {
