@@ -69,6 +69,17 @@ const Navbar = ({ onAddExam }) => {
 
         <div className="flex items-center gap-3">
           <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              sessionStorage.removeItem("token");
+              window.location.href = "/login";
+            }}
+            title="Sign out"
+          >
+            <LogOut className="w-4 h-4" />
+          </Button>
+          <Button
             onClick={onAddExam}
             title="Create Exam"
             className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] h-11 px-3 md:px-6 rounded-xl"
