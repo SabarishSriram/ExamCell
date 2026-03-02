@@ -12,12 +12,7 @@ const port = 8000;
 const JWT_SECRET =
   process.env.JWT_SECRET || "examcell-secret-key-change-in-production";
 
-app.use(
-  cors({
-    origin: ["http://localhost:5173", "http://192.168.0.104:5173"],
-    credentials: true,
-  }),
-);
+app.use(cors(),);
 app.use(express.json());
 // ─── Auth Middleware ──────────────────────────────────────────────────────────
 

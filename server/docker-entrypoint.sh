@@ -19,5 +19,8 @@ node scripts/parseCourses.js || echo "Warning: seed:courses failed, continuing..
 echo "Seeding admin..."
 node scripts/seedAdmin.js || echo "Warning: seed:admin failed, continuing..."
 
-echo "Seeding complete. Starting server..."
+echo "Seeding complete. Starting Prisma Studio..."
+npx prisma studio --schema=./prisma/schema.prisma --port 5555 --browser none &
+
+echo "Starting server..."
 exec pm2-runtime start index.js
