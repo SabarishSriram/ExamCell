@@ -350,10 +350,16 @@ const ReportsView = () => {
   };
 
   if (loading)
-    return <div className="p-20 text-center">Loading Reports...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50/30 px-4">
+        <div className="text-sm font-medium text-slate-600">
+          Loading Reports...
+        </div>
+      </div>
+    );
 
   return (
-    <div className="container mx-auto py-12 px-6 space-y-10">
+    <div className="container mx-auto py-8 px-4 sm:py-12 sm:px-6 space-y-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight leading-tight mb-2">
@@ -433,7 +439,7 @@ const ReportsView = () => {
       </div>
 
       {reportRows.length === 0 ? (
-        <div className="text-center py-32 bg-white/50 backdrop-blur-sm rounded-3xl border-2 border-dashed border-slate-200/60">
+        <div className="text-center py-16 sm:py-32 bg-white/50 backdrop-blur-sm rounded-3xl border-2 border-dashed border-slate-200/60">
           <ClipboardList className="w-12 h-12 text-slate-200 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-slate-800">No Reports Found</h3>
           <p className="text-slate-500 max-w-xs mx-auto font-medium">
@@ -471,13 +477,13 @@ const ReportsView = () => {
                     </div>
 
                     <div className="flex gap-4 items-center">
-                      <div className="flex items-center gap-2 bg-rose-50 px-4 py-2 rounded-xl border border-rose-100 shadow-sm">
+                      <div className="flex items-center gap-2  px-4 py-2   border-rose-100 ">
                         <UserX className="w-4 h-4 text-rose-500" />
                         <span className="text-rose-700 font-bold text-sm tracking-tight">
                           {absentees.length} Absent
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 bg-amber-50 px-4 py-2 rounded-xl border border-amber-100 shadow-sm">
+                      <div className="flex items-center gap-2  px-4 py-2   border-amber-100 ">
                         <AlertTriangle className="w-4 h-4 text-amber-500" />
                         <span className="text-amber-700 font-bold text-sm tracking-tight">
                           {malpractices.length} Reported
@@ -568,15 +574,15 @@ const ReportsView = () => {
                             <TableCell className="text-center">
                               {!s.isPresent ? (
                                 <Badge
-                                  variant="destructive"
-                                  className="font-black bg-rose-500 shadow-lg shadow-rose-200"
+                                  variant="outline"
+                                  className="text-red-600 border-red-200 bg-red-50"
                                 >
                                   ABSENT
                                 </Badge>
                               ) : (
                                 <Badge
                                   variant="outline"
-                                  className="text-emerald-600 border-emerald-200 bg-emerald-50 font-black"
+                                  className="text-emerald-600 border-emerald-200 bg-emerald-50"
                                 >
                                   PRESENT
                                 </Badge>

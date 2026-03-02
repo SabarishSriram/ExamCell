@@ -88,7 +88,24 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
   const [year, setYear] = useState("");
   const [selectedSections, setSelectedSections] = useState([]);
 
+  const YEAR_SUFFIX_MAP = {
+    "1st Year": "25",
+    "2nd Year": "24",
+    "3rd Year": "23",
+  };
+
   const filteredCourses = year ? courses.filter((c) => c.Year === year) : [];
+
+  const filteredSections = React.useMemo(() => {
+    if (!year) return [];
+    const suffix = YEAR_SUFFIX_MAP[year];
+    if (!suffix) return sections;
+    return (sections || []).filter((section) => {
+      const match = String(section).match(/-(\d{2})$/);
+      if (!match) return false;
+      return match[1] === suffix;
+    });
+  }, [year, sections]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -173,13 +190,13 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Schedule New Exam</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="year">Year</Label>
               <Select
@@ -187,6 +204,8 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                 onValueChange={(val) => {
                   setYear(val);
                   setCourse("");
+                  setSelectedSections([]);
+                  setVenues({});
                 }}
               >
                 <SelectTrigger>
@@ -219,7 +238,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <div className="space-y-2">
               <Label>Exam Date</Label>
               <Popover open={dateOpen} onOpenChange={setDateOpen}>
@@ -302,7 +321,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
           <div className="space-y-3">
             <Label>Target Sections & Venues</Label>
             <div className="space-y-3 border rounded-md p-4">
-              {sections.map((section) => {
+              {filteredSections.map((section) => {
                 const selected = selectedSections.includes(section);
                 return (
                   <div

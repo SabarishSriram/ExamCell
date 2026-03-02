@@ -28,17 +28,6 @@ const ExamCard = ({ exam, onDelete }) => {
             {exam.year}
           </Badge>
           <div className="flex flex-col items-end gap-2 relative">
-            <div className="flex -space-x-2">
-              {exam.sections.map((s, idx) => (
-                <div
-                  key={s}
-                  className="w-8 h-8 rounded-full bg-white border-2 border-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-600 shadow-sm"
-                  style={{ zIndex: 10 - idx }}
-                >
-                  {s}
-                </div>
-              ))}
-            </div>
             {onDelete && (
               <div className="relative">
                 <button
