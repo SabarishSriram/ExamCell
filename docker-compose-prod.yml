@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  proxy:
+    container_name: proxy
+    build:
+      context: ./proxy/prod
+      dockerfile: Dockerfile-prod
+    ports:
+      - 80:80
+      - 443:443
+    restart: on-failure:10
+    depends_on:
+      - api
+      - client
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+
+  mysql:
+    container_name: mysql-container
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=caching_sha2_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server:
+    container_name: server-container
+    platform: linux/amd64
+    build:
+      context: ./api
+      dockerfile: Dockerfile-prod
+    env_file:
+      - server/.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  client:
+    container_name: client-container
+    build:
+      context: ./client
+      dockerfile: Dockerfile-prod
+    env_file:
+      - client/.env
+    depends_on:
+      - api
+
+
+volumes:
+  mysql_data:

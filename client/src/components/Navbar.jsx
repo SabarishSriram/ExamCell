@@ -39,28 +39,30 @@ const Navbar = ({ onAddExam }) => {
             </div>
           </Link>
 
-          <div className="hidden md:flex items-center gap-1">
+          <div className="flex items-center gap-1">
             <Link
               to="/"
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              title="Exams"
+              className={`flex items-center gap-2 px-2 md:px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                 isActive("/")
                   ? "bg-primary/5 text-primary"
                   : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              <LayoutDashboard className="w-4 h-4" />
-              Exams
+              <LayoutDashboard className="w-5 h-5 md:w-4 md:h-4" />
+              <span className="hidden md:inline">Exams</span>
             </Link>
             <Link
               to="/reports"
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              title="Reports"
+              className={`flex items-center gap-2 px-2 md:px-4 py-2 rounded-xl text-sm font-bold transition-all ${
                 isActive("/reports")
                   ? "bg-primary/5 text-primary"
                   : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
               }`}
             >
-              <ClipboardList className="w-4 h-4" />
-              Reports
+              <ClipboardList className="w-5 h-5 md:w-4 md:h-4" />
+              <span className="hidden md:inline">Reports</span>
             </Link>
           </div>
         </div>
@@ -68,10 +70,11 @@ const Navbar = ({ onAddExam }) => {
         <div className="flex items-center gap-3">
           <Button
             onClick={onAddExam}
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] h-11 px-6 rounded-xl"
+            title="Create Exam"
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] h-11 px-3 md:px-6 rounded-xl"
           >
             <Plus className="w-5 h-5" />
-            <span className="font-semibold text-sm">Create Exam</span>
+            <span className="font-semibold text-xs md:text-sm">Create Exam</span>
           </Button>
 
           {user && (
