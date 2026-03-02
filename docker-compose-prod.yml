@@ -13,8 +13,6 @@ services:
     depends_on:
       - api
       - client
-    volumes:
-      - /etc/letsencrypt:/etc/letsencrypt
 
   mysql:
     container_name: mysql-container
