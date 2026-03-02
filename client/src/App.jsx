@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { api } from "@/lib/api";
+import axios from "axios";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { format, isSameDay } from "date-fns";
 import Navbar from "./components/Navbar";
 import AddExamModal from "./components/AddExamModal";
 import ExamCard from "./components/ExamCard";
 import ExamSession from "./components/ExamSession";
 import ReportsView from "./components/ReportsView";
-import LoginPage from "./components/LoginPage";
-import { ProtectedRoute } from "./components/ProtectedRoute";
+import Login from "./components/Login";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Input } from "./components/ui/input";
 import {
   Select,
@@ -167,7 +172,20 @@ const Dashboard = ({
   );
 };
 
-function App() {
+function ProtectedRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50/30 flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  return user ? children : <Navigate to="/login" replace />;
+}
+
+function AppRoutes() {
+  const { user } = useAuth();
   const [exams, setExams] = useState([]);
   const [courses, setCourses] = useState([]);
   const [sections, setSections] = useState([]);
@@ -192,8 +210,8 @@ function App() {
   };
 
   useEffect(() => {
-    if (sessionStorage.getItem("token")) fetchData();
-  }, []);
+    if (user) fetchData();
+  }, [user]);
 
   const handleDeleteExam = async (examId) => {
     toast("Delete this exam and its records?", {
@@ -219,50 +237,52 @@ function App() {
   };
 
   return (
-    <Router>
-      <div className="min-h-screen bg-slate-50/30">
-        <Routes>
-          <Route path="/login" element={<LoginPage onLoginSuccess={fetchData} />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Navbar onAddExam={() => setIsAddModalOpen(true)} />
-                <Dashboard
-                  exams={exams}
-                  courses={courses}
-                  filterDate={filterDate}
-                  setFilterDate={setFilterDate}
-                  selectedCourse={selectedCourse}
-                  setSelectedCourse={setSelectedCourse}
-                  venueFilter={venueFilter}
-                  setVenueFilter={setVenueFilter}
-                  onAddExam={() => setIsAddModalOpen(true)}
-                  onDeleteExam={handleDeleteExam}
-                />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <Navbar onAddExam={() => setIsAddModalOpen(true)} />
-                <ReportsView />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/session/:examId/:sectionId"
-            element={
-              <ProtectedRoute>
-                <Navbar onAddExam={() => setIsAddModalOpen(true)} />
-                <ExamSession />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
+    <div className="min-h-screen bg-slate-50/30">
+      {user && <Navbar onAddExam={() => setIsAddModalOpen(true)} />}
 
+      <Routes>
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/" replace /> : <Login />}
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Dashboard
+                exams={exams}
+                courses={courses}
+                filterDate={filterDate}
+                setFilterDate={setFilterDate}
+                selectedCourse={selectedCourse}
+                setSelectedCourse={setSelectedCourse}
+                venueFilter={venueFilter}
+                setVenueFilter={setVenueFilter}
+                onAddExam={() => setIsAddModalOpen(true)}
+                onDeleteExam={handleDeleteExam}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute>
+              <ReportsView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/session/:examId/:sectionId"
+          element={
+            <ProtectedRoute>
+              <ExamSession />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+
+      {user && (
         <AddExamModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
@@ -270,8 +290,18 @@ function App() {
           courses={courses}
           sections={sections}
         />
-        <Toaster />
-      </div>
+      )}
+      <Toaster />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </Router>
   );
 }

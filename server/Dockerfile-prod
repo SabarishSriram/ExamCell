@@ -1,0 +1,15 @@
+FROM node:21-bullseye
+RUN mkdir /app
+WORKDIR /app
+RUN npm install -g nodemon pm2
+
+COPY ./package.json /app/package.json
+RUN npm install --force
+
+COPY . /app
+
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+RUN chmod +x /app/docker-entrypoint.sh
+
+CMD [ "/app/docker-entrypoint.sh" ]
