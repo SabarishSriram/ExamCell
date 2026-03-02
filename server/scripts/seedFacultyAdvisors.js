@@ -1,20 +1,6 @@
 const path = require("path");
-const readline = require("readline");
 const XLSX = require("xlsx");
 const prisma = require("../prisma/prismaClient");
-
-function ask(question) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve((answer || "").trim().toLowerCase());
-    });
-  });
-}
 
 const DATA_FILE = path.join(
   __dirname,
@@ -233,15 +219,12 @@ async function main() {
   }
 
   if (unmatched.length > 0) {
-    console.log("\n=== UNMATCHED (below threshold) – manual approval ===\n");
+    console.log("\n=== UNMATCHED (below threshold) – auto-approving best match ===\n");
     for (const u of unmatched) {
-      const promptText =
-        u.bestMatch
-          ? `${u.sectionCode} "${u.faName}" → best match: ${u.bestCandidate} (${u.bestMatch.empId}) [score: ${u.score}]. Link? (y/n): `
-          : `${u.sectionCode} "${u.faName}" – no candidate in DB. Skip (Enter): `;
-
-      const answer = await ask(promptText);
-      if (answer === "y" && u.bestMatch) {
+      if (u.bestMatch) {
+        console.log(
+          `  ${u.sectionCode} "${u.faName}" → auto-linking: ${u.bestCandidate} (${u.bestMatch.empId}) [score: ${u.score}]`
+        );
         await prisma.section.update({
           where: { code: u.sectionCode },
           data: { advisorEmpId: u.bestMatch.empId },
@@ -255,7 +238,7 @@ async function main() {
         });
         console.log(`  → Linked ${u.sectionCode} to ${u.bestMatch.name}\n`);
       } else {
-        console.log(`  → Skipped ${u.sectionCode}\n`);
+        console.log(`  → Skipped ${u.sectionCode} (no candidate in DB)\n`);
       }
     }
   }
