@@ -11,7 +11,7 @@ services:
       - 443:443
     restart: on-failure:10
     depends_on:
-      - api
+      - server
       - client
 
   mysql:
@@ -38,7 +38,7 @@ services:
     container_name: server-container
     platform: linux/amd64
     build:
-      context: ./api
+      context: ./server
       dockerfile: Dockerfile-prod
     env_file:
       - server/.env
@@ -54,7 +54,7 @@ services:
     env_file:
       - client/.env
     depends_on:
-      - api
+      - server
 
 
 volumes:

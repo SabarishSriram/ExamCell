@@ -10,4 +10,6 @@ COPY . /app
 
 RUN npx prisma generate --schema=./prisma/schema.prisma
 
-CMD [ "pm2-runtime", "start", "index.js"]
+RUN chmod +x /app/docker-entrypoint.sh
+
+CMD [ "/app/docker-entrypoint.sh" ]
