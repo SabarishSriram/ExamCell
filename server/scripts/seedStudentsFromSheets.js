@@ -2,7 +2,10 @@ const path = require("path");
 const XLSX = require("xlsx");
 const prisma = require("../prisma/prismaClient");
 
-const DATA_FILE = path.join(__dirname, "..", "data", "2nd Year.xlsx");
+const DATA_FILES = [
+  path.join(__dirname, "..", "data", "1st Year.xlsx"),
+  path.join(__dirname, "..", "data", "2nd Year.xlsx"),
+];
 
 // Section codes we expect (for extracting from combined strings)
 const SECTION_PATTERN = /\b(U1|U2|V1|V2|W1|W2|X1|X2|Y1|Y2|Z1|Z2|AA1|AA2|T1|T2|S1|S2|R1|R2|P1|P2|Q1|Q2|AH1|AH2|AI1|AI2|AJ1|AJ2|AK1|AK2|AL1|AL2|AO1|AP1|AC2|AD2|AE2)\b/i;
@@ -230,18 +233,19 @@ async function importWorkbook(filePath, stats) {
 
 async function main() {
   const fs = require("fs");
-  if (!fs.existsSync(DATA_FILE)) {
-    console.error("Data file not found:", DATA_FILE);
-    process.exit(1);
-  }
-
-  console.log("Importing from:", path.relative(process.cwd(), DATA_FILE));
 
   const stats = { insertedOrUpdated: 0 };
 
   try {
-    await importWorkbook(DATA_FILE, stats);
-    console.log("Done.");
+    for (const filePath of DATA_FILES) {
+      if (!fs.existsSync(filePath)) {
+        console.warn("Data file not found, skipping:", filePath);
+        continue;
+      }
+      console.log("\nImporting from:", path.relative(process.cwd(), filePath));
+      await importWorkbook(filePath, stats);
+    }
+    console.log("\nDone.");
     console.log("Total students inserted/updated:", stats.insertedOrUpdated);
   } finally {
     await prisma.$disconnect();
