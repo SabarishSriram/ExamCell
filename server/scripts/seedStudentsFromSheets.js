@@ -104,8 +104,8 @@ function parseSheet(sheet, sheetName) {
 
   const headerToIdx = {};
   (cols || []).forEach((cell, idx) => {
-    const k = String(cell ?? `__col${idx}`).trim();
-    if (k) headerToIdx[k] = idx;
+    const k = String(cell ?? "").trim() || `__col${idx}`;
+    headerToIdx[k] = idx;
   });
 
   const defaultSection = extractSectionFromSheetName(sheetName);
@@ -134,6 +134,14 @@ function parseSheet(sheet, sheetName) {
       "studentnam",
       "student",
     ]);
+    // Fallback: some sheets (e.g. W2) have empty header for Name column (often __col2)
+    if (!name && regNo) {
+      const nameCandidate = row["__col2"] ?? row["__col1"];
+      if (nameCandidate && typeof nameCandidate === "string") {
+        const s = nameCandidate.trim();
+        if (s && !/^RA\d{7,}/.test(s) && !/^\d+$/.test(s)) name = s;
+      }
+    }
     let section = pickColumn(row, ["Section", "SECTION", "Sec", "SEC"], ["section", "sec"]);
     const specialization = pickColumn(
       row,
