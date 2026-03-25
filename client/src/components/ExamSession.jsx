@@ -33,13 +33,15 @@ const ExamSession = () => {
   const [attendance, setAttendance] = useState({});
   const [activities, setActivities] = useState({});
   const [remarks, setRemarks] = useState({});
+  const [reportId, setReportId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [examRes, studentRes] = await Promise.all([
+        const [examRes, studentRes, reportRes] = await Promise.all([
           api.get("/exams"),
           api.get("/students"),
+          api.get("/reports"),
         ]);
 
         const currentExam = examRes.data.find((e) => e.id === examId);
@@ -50,15 +52,33 @@ const ExamSession = () => {
         );
         setStudents(sectionStudents);
 
+        const existingReport = reportRes.data.find(
+          (r) => r.examId === examId && r.section === sectionId
+        );
+
+        if (existingReport) {
+          setReportId(existingReport.id);
+        }
+
         // Initialize state
         const initialAttendance = {};
         const initialActivities = {};
         const initialRemarks = {};
 
+        if (existingReport) {
+          existingReport.students.forEach((s) => {
+            initialAttendance[s.regNo] = s.isPresent;
+            initialActivities[s.regNo] = s.activity;
+            initialRemarks[s.regNo] = s.remarks;
+          });
+        }
+
         sectionStudents.forEach((s) => {
-          initialAttendance[s.RegNO] = true; // Default ticked (Present)
-          initialActivities[s.RegNO] = "None";
-          initialRemarks[s.RegNO] = "";
+          if (initialAttendance[s.RegNO] === undefined) {
+             initialAttendance[s.RegNO] = true; // Default ticked (Present)
+             initialActivities[s.RegNO] = "None";
+             initialRemarks[s.RegNO] = "";
+          }
         });
 
         setAttendance(initialAttendance);
@@ -87,8 +107,13 @@ const ExamSession = () => {
     };
 
     try {
-      await api.post("/reports", reportData);
-      toast.success("Report submitted successfully!");
+      if (reportId) {
+        await api.put(`/reports/${reportId}`, reportData);
+        toast.success("Report updated successfully!");
+      } else {
+        await api.post("/reports", reportData);
+        toast.success("Report submitted successfully!");
+      }
       navigate("/");
     } catch (error) {
       console.error("Error submitting report:", error);
@@ -147,7 +172,7 @@ const ExamSession = () => {
             className="gap-2 bg-primary shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
           >
             <Save className="w-4 h-4" />
-            Submit Reports
+            {reportId ? "Update Reports" : "Submit Reports"}
           </Button>
         </div>
       </div>
