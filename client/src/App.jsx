@@ -32,7 +32,8 @@ import { Calendar } from "./components/ui/calendar";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { Calendar as CalendarIcon, MapPin, GraduationCap } from "lucide-react";
+import { Calendar as CalendarIcon, MapPin, GraduationCap, LayoutList, CalendarDays } from "lucide-react";
+import CalendarView from "./components/CalendarView";
 
 const Dashboard = ({
   exams,
@@ -46,6 +47,22 @@ const Dashboard = ({
   onAddExam,
   onDeleteExam,
 }) => {
+  const [viewType, setViewType] = useState("calendar");
+
+  const filteredExamsForCalendar = exams.filter((exam) => {
+    const matchesCourse =
+      selectedCourse === "all" || exam.course === selectedCourse;
+
+    const baseVenue = (exam.venue || "").toLowerCase();
+    const sectionVenues = exam.venueBySection
+      ? Object.values(exam.venueBySection).join(" ").toLowerCase()
+      : "";
+    const combinedVenues = `${baseVenue} ${sectionVenues}`.trim();
+    const matchesVenue =
+      !venueFilter || combinedVenues.includes(venueFilter.toLowerCase());
+
+    return matchesCourse && matchesVenue;
+  });
   const filteredExams = exams.filter((exam) => {
     const examDate = exam.date ? new Date(exam.date) : null;
     const matchesDate =
@@ -80,6 +97,26 @@ const Dashboard = ({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <Select value={viewType} onValueChange={setViewType}>
+              <SelectTrigger className="w-full sm:w-[180px] h-12 rounded-xl border-slate-200 bg-white font-bold text-slate-600 shadow-sm text-xs">
+                <SelectValue placeholder="View" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-slate-200">
+                <SelectItem value="list">
+                  <div className="flex items-center gap-2">
+                    <LayoutList className="w-4 h-4" />
+                    List View
+                  </div>
+                </SelectItem>
+                <SelectItem value="calendar">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4" />
+                    Calendar View
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -124,7 +161,7 @@ const Dashboard = ({
               </SelectContent>
             </Select>
 
-            <div className="relative group w-full sm:w-[220px]">
+            <div className="relative group w-full sm:w-[160px]">
               <Input
                 placeholder="Filter by venue..."
                 value={venueFilter}
@@ -137,7 +174,9 @@ const Dashboard = ({
         </div>
       </div>
 
-      {filteredExams.length === 0 ? (
+      {viewType === "calendar" ? (
+        <CalendarView exams={filteredExamsForCalendar} />
+      ) : filteredExams.length === 0 ? (
         <div className="text-center py-32 bg-white/50 backdrop-blur-sm rounded-3xl border-2 border-dashed border-slate-200/60 shadow-inner">
           <div className="bg-slate-100/50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
             <GraduationCap className="w-10 h-10 text-slate-300" />
