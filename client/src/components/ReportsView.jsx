@@ -311,7 +311,16 @@ const ReportsView = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", "exam_reports.csv");
+
+    const coursePart = selectedCourse === "all" ? "all_courses" : selectedCourse.replace(/\s+/g, "_");
+    let statusPart = "records";
+    if (statusFilter === "absent") statusPart = "absentees";
+    else if (statusFilter === "malpractice") statusPart = "malpractice";
+    
+    const datePart = filterDate ? `_${format(filterDate, "ddMMMyy")}` : "";
+    const fileName = `${coursePart}_${statusPart}${datePart}.csv`;
+
+    link.setAttribute("download", fileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
