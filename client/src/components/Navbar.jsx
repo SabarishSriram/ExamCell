@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "./ui/button";
-import { Plus, ClipboardList, LayoutDashboard, LogOut } from "lucide-react";
+import { Plus, ClipboardList, LayoutDashboard, LogOut, Users, ScrollText, Package } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -10,6 +10,8 @@ const Navbar = ({ onAddExam }) => {
   const { user, logout } = useAuth();
 
   const isActive = (path) => location.pathname === path;
+  const isAdmin = user?.role === "admin";
+  const canSchedule = user?.role === "admin" || user?.role === "scheduler";
 
   const handleLogout = () => {
     logout();
@@ -64,25 +66,71 @@ const Navbar = ({ onAddExam }) => {
               <ClipboardList className="w-5 h-5 md:w-4 md:h-4" />
               <span className="hidden md:inline">Reports</span>
             </Link>
+            {isAdmin && (
+              <>
+                <Link
+                  to="/inventory"
+                  title="Inventory"
+                  className={`flex items-center gap-2 px-2 md:px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    isActive("/inventory")
+                      ? "bg-primary/5 text-primary"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  <Package className="w-5 h-5 md:w-4 md:h-4" />
+                  <span className="hidden md:inline">Inventory</span>
+                </Link>
+                <Link
+                  to="/users"
+                  title="Users"
+                  className={`flex items-center gap-2 px-2 md:px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    isActive("/users")
+                      ? "bg-primary/5 text-primary"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  <Users className="w-5 h-5 md:w-4 md:h-4" />
+                  <span className="hidden md:inline">Users</span>
+                </Link>
+                <Link
+                  to="/logs"
+                  title="Logs"
+                  className={`flex items-center gap-2 px-2 md:px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    isActive("/logs")
+                      ? "bg-primary/5 text-primary"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  <ScrollText className="w-5 h-5 md:w-4 md:h-4" />
+                  <span className="hidden md:inline">Logs</span>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-
-          <Button
-            onClick={onAddExam}
-            title="Create Exam"
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] h-11 px-3 md:px-6 rounded-xl"
-          >
-            <Plus className="w-5 h-5" />
-            <span className="font-semibold text-xs md:text-sm">Create Exam</span>
-          </Button>
+          {canSchedule && (
+            <Button
+              onClick={onAddExam}
+              title="Create Exam"
+              className="flex items-center gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98] h-11 px-3 md:px-6 rounded-xl"
+            >
+              <Plus className="w-5 h-5" />
+              <span className="font-semibold text-xs md:text-sm">Create Exam</span>
+            </Button>
+          )}
 
           {user && (
             <div className="flex items-center gap-2 pl-3 border-l border-slate-200">
-              <span className="hidden sm:block text-xs font-semibold text-slate-500 max-w-[160px] truncate">
-                {user.email}
-              </span>
+              <div className="hidden sm:flex flex-col items-end">
+                <span className="text-xs font-semibold text-slate-500 max-w-[160px] truncate">
+                  {user.email}
+                </span>
+                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-300">
+                  {user.role}
+                </span>
+              </div>
               <button
                 onClick={handleLogout}
                 title="Sign out"

@@ -82,8 +82,10 @@ model Exam {
     fromTime  String   @db.VarChar(20)
     toTime    String   @db.VarChar(20)
     timeRange String   @db.VarChar(50)
-    year      String?  @db.VarChar(50)
-    venue     String?  @db.VarChar(255)
+    year           String?  @db.VarChar(50)
+    venue          String?  @db.VarChar(255)
+    electiveRegNos String?  @db.Text
+    bookletType    String?  @db.VarChar(50)
 
     sections ExamSection[]
     reports  ExamReport[]
@@ -118,11 +120,32 @@ model ExamReport {
     @@index([sectionCode])
 }
 
+model BookletStock {
+    id        Int      @id @default(autoincrement())
+    type      String   @unique @db.VarChar(50)
+    quantity  Int      @default(0)
+    updatedAt DateTime @updatedAt
+}
+
 model User {
     id           Int      @id @default(autoincrement())
     email        String   @unique @db.VarChar(255)
     passwordHash String   @db.Text
+    role         String   @default("scheduler") @db.VarChar(50)
     createdAt    DateTime @default(now())
+    logs         AuditLog[]
+}
+
+model AuditLog {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    userEmail String   @db.VarChar(255)
+    action    String   @db.VarChar(255)
+    details   String?  @db.Text
+    createdAt DateTime @default(now())
+    user      User     @relation(fields: [userId], references: [id])
+
+    @@index([userId])
 }
 
 /// Individual student row inside a report (presence / malpractice etc.)

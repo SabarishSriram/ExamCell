@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, MapPin } from "lucide-react";
+import { Calendar as CalendarIcon, MapPin, BookOpen, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import ElectiveUploadModal from "./ElectiveUploadModal";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +32,9 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
   const [dateOpen, setDateOpen] = useState(false);
   const [fromTime, setFromTime] = useState("");
   const [toTime, setToTime] = useState("");
+  const [isElectiveModalOpen, setIsElectiveModalOpen] = useState(false);
+  const [isElective, setIsElective] = useState(false);
+  const [electiveRegNos, setElectiveRegNos] = useState(null);
 
   const baseFrom = [
     "8:00",
@@ -87,6 +91,15 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
   const [venues, setVenues] = useState({});
   const [year, setYear] = useState("");
   const [selectedSections, setSelectedSections] = useState([]);
+  const [bookletType, setBookletType] = useState("");
+  const [sectionCounts, setSectionCounts] = useState({});
+  const [inventory, setInventory] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    api.get("/section-counts").then((r) => setSectionCounts(r.data)).catch(() => {});
+    api.get("/inventory").then((r) => setInventory(r.data)).catch(() => {});
+  }, [isOpen]);
 
   const YEAR_SUFFIX_MAP = {
     "1st Year": "25",
@@ -106,6 +119,35 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
       return match[1] === suffix;
     });
   }, [year, sections]);
+  const handleElectiveParsed = ({ year: parsedYear, sections: parsedSections, venue: parsedVenue, course: parsedCourse, courseCode: parsedCourseCode, electiveRegNos: parsedElectiveRegNos }) => {
+    setIsElective(true);
+    if (parsedYear) setYear(parsedYear);
+    const formatted = parsedCourse
+      ? parsedCourseCode
+        ? `${parsedCourse} (${parsedCourseCode})`
+        : parsedCourse
+      : "";
+    setCourse(formatted);
+    setElectiveRegNos(parsedElectiveRegNos || null);
+
+    if (parsedSections && parsedSections.length > 0 && parsedYear) {
+      const suffix = YEAR_SUFFIX_MAP[parsedYear];
+      const matchedSections = parsedSections
+        .map((s) => {
+          const candidate = suffix ? `${s}-${suffix}` : null;
+          return candidate && sections.includes(candidate) ? candidate : null;
+        })
+        .filter(Boolean);
+
+      setSelectedSections(matchedSections);
+
+      if (parsedVenue) {
+        const newVenues = {};
+        matchedSections.forEach((sec) => { newVenues[sec] = parsedVenue; });
+        setVenues(newVenues);
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -144,11 +186,12 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
         year,
         sections: selectedSections,
         venueBySection,
-        // Fallback for existing views that use a single venue
         venue:
           venueBySection[selectedSections[0]] ||
           Object.values(venueBySection)[0] ||
           "",
+        ...(electiveRegNos ? { electiveRegNos } : {}),
+        ...(bookletType ? { bookletType } : {}),
       };
       await api.post("/exams", payload);
       onSuccess();
@@ -162,6 +205,9 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
       setVenues({});
       setYear("");
       setSelectedSections([]);
+      setIsElective(false);
+      setElectiveRegNos(null);
+      setBookletType("");
       toast.success("Exam scheduled successfully!");
     } catch (error) {
       console.error("Error adding exam:", error);
@@ -189,6 +235,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
   };
 
   return (
+    <>
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -204,6 +251,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                 onValueChange={(val) => {
                   setYear(val);
                   setCourse("");
+                  setIsElective(false);
                   setSelectedSections([]);
                   setVenues({});
                 }}
@@ -220,21 +268,36 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="course">Course</Label>
-              <Select value={course} onValueChange={setCourse} disabled={!year}>
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={year ? "Select a course" : "Select year first"}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredCourses.map((c) => (
-                    <SelectItem key={c["Course Code"]} value={c["Course Name"]}>
-                      {c["Course Name"]} ({c["Course Code"]})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="course">
+                Course{isElective && (
+                  <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-primary bg-primary/10 px-1.5 py-0.5 rounded align-middle">
+                    Elective
+                  </span>
+                )}
+              </Label>
+              {isElective ? (
+                <Input
+                  id="course"
+                  value={course}
+                  onChange={(e) => setCourse(e.target.value)}
+                  placeholder="Enter elective course name"
+                />
+              ) : (
+                <Select value={course} onValueChange={setCourse} disabled={!year}>
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={year ? "Select a course" : "Select year first"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredCourses.map((c) => (
+                      <SelectItem key={c["Course Code"]} value={c["Course Name"]}>
+                        {c["Course Name"]} ({c["Course Code"]})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
 
@@ -323,6 +386,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
             <div className="space-y-3 border rounded-md p-4">
               {filteredSections.map((section) => {
                 const selected = selectedSections.includes(section);
+                const count = sectionCounts[section];
                 return (
                   <div
                     key={section}
@@ -339,6 +403,11 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                       >
                         {section}
+                        {count != null && (
+                          <span className="ml-1.5 text-xs text-slate-400 font-normal">
+                            ({count} students)
+                          </span>
+                        )}
                       </label>
                     </div>
                     <div className="sm:col-span-2 relative">
@@ -359,7 +428,75 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
             </div>
           </div>
 
-          <DialogFooter className="pt-4">
+          <div className="space-y-2">
+            <Label>Booklet Type</Label>
+            <Select value={bookletType} onValueChange={setBookletType}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select booklet type (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="40-page">40-Page Booklet</SelectItem>
+                <SelectItem value="15-page">15-Page Booklet</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {bookletType && selectedSections.length > 0 && (() => {
+            const totalStudents = selectedSections.reduce(
+              (sum, s) => sum + (sectionCounts[s] || 0),
+              0
+            );
+            const stockEntry = inventory.find((i) => i.type === bookletType);
+            const available = stockEntry?.quantity ?? 0;
+            const sufficient = available >= totalStudents;
+            return (
+              <div className={`rounded-lg border p-3 text-sm ${sufficient ? "border-green-200 bg-green-50" : "border-amber-200 bg-amber-50"}`}>
+                <div className="flex items-center gap-2 mb-2 font-semibold">
+                  {sufficient
+                    ? <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    : <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  }
+                  <span className={sufficient ? "text-green-700" : "text-amber-700"}>
+                    Booklet Impact — {bookletType}
+                  </span>
+                </div>
+                <div className="space-y-1 text-slate-600">
+                  {selectedSections.map((s) => (
+                    <div key={s} className="flex justify-between text-xs">
+                      <span>{s}</span>
+                      <span className="font-medium">{sectionCounts[s] ?? "?"} booklets</span>
+                    </div>
+                  ))}
+                  <div className="border-t border-slate-200 mt-1 pt-1 flex justify-between font-semibold">
+                    <span>Total needed</span>
+                    <span>{totalStudents}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span>Available in stock</span>
+                    <span className={sufficient ? "text-green-700 font-semibold" : "text-red-600 font-semibold"}>
+                      {available.toLocaleString()}
+                    </span>
+                  </div>
+                  {!sufficient && (
+                    <p className="text-xs text-amber-700 mt-1 font-medium">
+                      Shortfall of {totalStudents - available} booklets — update inventory before proceeding.
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+        <DialogFooter className="pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="mr-auto flex items-center gap-1.5 text-primary border-primary/30 hover:bg-primary/5"
+              onClick={() => setIsElectiveModalOpen(true)}
+            >
+              <BookOpen className="w-4 h-4" />
+              Elective
+            </Button>
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
@@ -368,6 +505,13 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
         </form>
       </DialogContent>
     </Dialog>
+
+    <ElectiveUploadModal
+      isOpen={isElectiveModalOpen}
+      onClose={() => setIsElectiveModalOpen(false)}
+      onParsed={handleElectiveParsed}
+    />
+    </>
   );
 };
 
