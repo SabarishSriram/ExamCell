@@ -5,6 +5,7 @@ const prisma = require("../prisma/prismaClient");
 const DATA_FILES = [
   path.join(__dirname, "..", "data", "1st Year.xlsx"),
   path.join(__dirname, "..", "data", "2nd Year.xlsx"),
+  path.join(__dirname, "..", "data", "3rd Year.xlsx"),
 ];
 
 // Section codes we expect (for extracting from combined strings)

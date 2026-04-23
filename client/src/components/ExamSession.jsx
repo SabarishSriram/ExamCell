@@ -40,16 +40,22 @@ const ExamSession = () => {
       try {
         const [examRes, studentRes, reportRes] = await Promise.all([
           api.get("/exams"),
-          api.get("/students"),
+          api.get("/students", { params: { section: sectionId } }),
           api.get("/reports"),
         ]);
 
         const currentExam = examRes.data.find((e) => e.id === examId);
         setExam(currentExam);
 
-        const sectionStudents = studentRes.data.filter(
-          (s) => s.Section === sectionId,
-        );
+        const allSectionStudents = studentRes.data;
+
+        // For elective exams: only show students whose reg number appears in the PDF
+        const sectionStudents = currentExam?.electiveRegNos?.length
+          ? allSectionStudents.filter((s) =>
+              currentExam.electiveRegNos.includes(s.RegNO),
+            )
+          : allSectionStudents;
+
         setStudents(sectionStudents);
 
         const existingReport = reportRes.data.find(

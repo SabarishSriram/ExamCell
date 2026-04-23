@@ -76,9 +76,18 @@ model Exam {
   timeRange String
   year      String?
   venue     String?
+  electiveRegNos String?            // JSON array of reg numbers for elective exams
+  bookletType    String?
 
   sections  ExamSection[]
   reports   ExamReport[]
+}
+
+model BookletStock {
+  id        Int      @id @default(autoincrement())
+  type      String   @unique
+  quantity  Int      @default(0)
+  updatedAt DateTime @updatedAt
 }
 
 /// Per-section information for an exam (to replace sections[] and venueBySection)
@@ -105,10 +114,22 @@ model ExamReport {
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
   passwordHash String
-  createdAt    DateTime @default(now())
+  role         String     @default("scheduler")
+  createdAt    DateTime   @default(now())
+  logs         AuditLog[]
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  userEmail String
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 /// Individual student row inside a report (presence / malpractice etc.)

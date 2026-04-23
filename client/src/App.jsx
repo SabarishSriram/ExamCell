@@ -12,6 +12,9 @@ import AddExamModal from "./components/AddExamModal";
 import ExamCard from "./components/ExamCard";
 import ExamSession from "./components/ExamSession";
 import ReportsView from "./components/ReportsView";
+import UsersView from "./components/UsersView";
+import LogsView from "./components/LogsView";
+import InventoryView from "./components/InventoryView";
 import Login from "./components/Login";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Input } from "./components/ui/input";
@@ -188,13 +191,15 @@ const Dashboard = ({
             Get started by creating your first examination schedule for this
             semester.
           </p>
-          <Button
-            onClick={onAddExam}
-            variant="outline"
-            className="rounded-xl border-2 hover:bg-slate-50 font-bold px-8"
-          >
-            + Create First Exam
-          </Button>
+          {onAddExam && (
+            <Button
+              onClick={onAddExam}
+              variant="outline"
+              className="rounded-xl border-2 hover:bg-slate-50 font-bold px-8"
+            >
+              + Create First Exam
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -211,7 +216,7 @@ const Dashboard = ({
   );
 };
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, requiredRole }) {
   const { user, loading } = useAuth();
   if (loading) {
     return (
@@ -220,11 +225,14 @@ function ProtectedRoute({ children }) {
       </div>
     );
   }
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (requiredRole && user.role !== requiredRole) return <Navigate to="/" replace />;
+  return children;
 }
 
 function AppRoutes() {
   const { user } = useAuth();
+  const canSchedule = user?.role === "admin" || user?.role === "scheduler";
   const [exams, setExams] = useState([]);
   const [courses, setCourses] = useState([]);
   const [sections, setSections] = useState([]);
@@ -297,8 +305,8 @@ function AppRoutes() {
                 setSelectedCourse={setSelectedCourse}
                 venueFilter={venueFilter}
                 setVenueFilter={setVenueFilter}
-                onAddExam={() => setIsAddModalOpen(true)}
-                onDeleteExam={handleDeleteExam}
+                onAddExam={canSchedule ? () => setIsAddModalOpen(true) : undefined}
+                onDeleteExam={canSchedule ? handleDeleteExam : undefined}
               />
             </ProtectedRoute>
           }
@@ -316,6 +324,30 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <ExamSession />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <UsersView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/logs"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <LogsView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/inventory"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <InventoryView />
             </ProtectedRoute>
           }
         />

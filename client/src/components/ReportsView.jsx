@@ -44,8 +44,11 @@ import {
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useAuth } from "../context/AuthContext";
 
 const ReportsView = () => {
+  const { user } = useAuth();
+  const canDelete = user?.role === "admin" || user?.role === "scheduler";
   const [reports, setReports] = useState([]);
   const [exams, setExams] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -498,13 +501,15 @@ const ReportsView = () => {
                           {malpractices.length} Reported
                         </span>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteReport(reportIds)}
-                        className="text-[10px] font-semibold text-red-500 hover:text-red-600 underline-offset-2 hover:underline"
-                      >
-                        Delete
-                      </button>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReport(reportIds)}
+                          className="text-[10px] font-semibold text-red-500 hover:text-red-600 underline-offset-2 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

@@ -39,7 +39,7 @@ export function AuthProvider({ children }) {
     const { token, user: loggedInUser } = res.data;
     localStorage.setItem("token", token);
     applyToken(token);
-    setUser(loggedInUser);
+    setUser(loggedInUser); // includes id, email, role
     return loggedInUser;
   };
 
