@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { api } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import { format } from "date-fns";
 import { Calendar as CalendarIcon, MapPin, BookOpen, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -26,7 +27,17 @@ import { Calendar } from "./ui/calendar";
 import { Checkbox } from "./ui/checkbox";
 import { toast } from "sonner";
 
+const MIN_EXAM_LEAD_DAYS = 2;
+
 const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+  const minSelectableDate = React.useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + MIN_EXAM_LEAD_DAYS);
+    return d;
+  }, []);
   const [course, setCourse] = useState("");
   const [date, setDate] = useState(null);
   const [dateOpen, setDateOpen] = useState(false);
@@ -164,6 +175,13 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
     ) {
       toast.error(
         "Please fill all fields, select at least one section, and enter venue for each selected section",
+      );
+      return;
+    }
+
+    if (!isAdmin && date < minSelectableDate) {
+      toast.error(
+        `Exams must be scheduled at least ${MIN_EXAM_LEAD_DAYS} days in advance.`,
       );
       return;
     }
@@ -325,6 +343,7 @@ const AddExamModal = ({ isOpen, onClose, onSuccess, courses, sections }) => {
                       setDate(d);
                       setDateOpen(false);
                     }}
+                    disabled={isAdmin ? undefined : { before: minSelectableDate }}
                     initialFocus
                   />
                 </PopoverContent>

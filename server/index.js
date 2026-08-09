@@ -356,6 +356,17 @@ app.get("/api/faculty", requireAuth, async (req, res) => {
 
 // ─── Exams ───────────────────────────────────────────────────────────────────
 
+const MIN_EXAM_LEAD_DAYS = 2;
+
+function hasMinExamLeadTime(examDate) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const exam = new Date(examDate);
+  exam.setHours(0, 0, 0, 0);
+  const diffDays = Math.round((exam - today) / (1000 * 60 * 60 * 24));
+  return diffDays >= MIN_EXAM_LEAD_DAYS;
+}
+
 function formatExam(exam) {
   const sections = exam.sections.map((es) => es.sectionCode);
   const venueBySection = {};
@@ -403,6 +414,13 @@ app.post("/api/exams", requireAuth, requireRole("admin", "scheduler"), async (re
       electiveRegNos,
       bookletType,
     } = req.body;
+
+    if (req.user.role !== "admin" && !hasMinExamLeadTime(date)) {
+      return res.status(400).json({
+        message: `Exams must be scheduled at least ${MIN_EXAM_LEAD_DAYS} days in advance.`,
+      });
+    }
+
     const id = Date.now().toString();
 
     const exam = await prisma.exam.create({
