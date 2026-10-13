@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "./ui/button";
-import { Plus, ClipboardList, LayoutDashboard, LogOut, Users, ScrollText, Package } from "lucide-react";
+import { Plus, ClipboardList, LayoutDashboard, LogOut, Users, ScrollText, Package, Upload } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
@@ -68,6 +68,18 @@ const Navbar = ({ onAddExam }) => {
             </Link>
             {isAdmin && (
               <>
+                <Link
+                  to="/import"
+                  title="Import"
+                  className={`flex items-center gap-2 px-2 md:px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                    isActive("/import")
+                      ? "bg-primary/5 text-primary"
+                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  }`}
+                >
+                  <Upload className="w-5 h-5 md:w-4 md:h-4" />
+                  <span className="hidden md:inline">Import</span>
+                </Link>
                 <Link
                   to="/inventory"
                   title="Inventory"

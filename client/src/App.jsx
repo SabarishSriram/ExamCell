@@ -15,6 +15,7 @@ import ReportsView from "./components/ReportsView";
 import UsersView from "./components/UsersView";
 import LogsView from "./components/LogsView";
 import InventoryView from "./components/InventoryView";
+import DataImportView from "./components/DataImportView";
 import Login from "./components/Login";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Input } from "./components/ui/input";
@@ -348,6 +349,14 @@ function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="admin">
               <InventoryView />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/import"
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <DataImportView />
             </ProtectedRoute>
           }
         />

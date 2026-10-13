@@ -140,23 +140,12 @@ function findBestFacultyMatch(faName, facultyList) {
   return { match: bestMatch, score: bestScore };
 }
 
-// ── Main ────────────────────────────────────────────────────────────
-
-async function main() {
-  const fs = require("fs");
-  if (!fs.existsSync(DATA_FILE)) {
-    console.error("Data file not found:", DATA_FILE);
-    process.exit(1);
-  }
-
-  const workbook = XLSX.readFile(DATA_FILE);
+async function importFacultyAdvisorsFromWorkbook(workbook) {
   const sheet = workbook.Sheets[SHEET_NAME];
   if (!sheet) {
-    console.error(
-      `Sheet "${SHEET_NAME}" not found. Available:`,
-      workbook.SheetNames
+    throw new Error(
+      `Sheet "${SHEET_NAME}" not found. Available: ${workbook.SheetNames.join(", ")}`
     );
-    process.exit(1);
   }
 
   const entries = parseFASheet(sheet);
@@ -164,8 +153,7 @@ async function main() {
 
   const allFaculty = await prisma.faculty.findMany();
   if (allFaculty.length === 0) {
-    console.error("No faculty in DB. Run seed:faculty first.");
-    process.exit(1);
+    throw new Error("No faculty in DB. Import faculty first.");
   }
   console.log(`Found ${allFaculty.length} faculty records in DB\n`);
 
@@ -253,11 +241,33 @@ async function main() {
   console.log(
     `\nSummary: ${linked.length} linked, ${unmatched.length} unmatched, ${noSection.length} sections not in DB`
   );
+
+  return {
+    parsed: entries.length,
+    linked: linked.length,
+    noSection: noSection.length,
+    skippedSections: noSection.map((n) => n.sectionCode),
+  };
 }
 
-main()
-  .catch((err) => {
-    console.error("Error seeding faculty advisors:", err);
+async function main() {
+  const fs = require("fs");
+  if (!fs.existsSync(DATA_FILE)) {
+    console.error("Data file not found:", DATA_FILE);
     process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+  }
+
+  const workbook = XLSX.readFile(DATA_FILE);
+  await importFacultyAdvisorsFromWorkbook(workbook);
+}
+
+module.exports = { importFacultyAdvisorsFromWorkbook, parseFASheet };
+
+if (require.main === module) {
+  main()
+    .catch((err) => {
+      console.error("Error seeding faculty advisors:", err);
+      process.exit(1);
+    })
+    .finally(() => prisma.$disconnect());
+}

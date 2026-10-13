@@ -5,7 +5,12 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const multer = require("multer");
+const XLSX = require("xlsx");
 const prisma = require("./prisma/prismaClient");
+const { importStudentsFromBuffer } = require("./scripts/seedStudentsFromSheets");
+const { importFacultyFromWorkbook } = require("./scripts/seedFaculty");
+const { importCoursesFromWorkbook } = require("./scripts/parseCourses");
+const { importFacultyAdvisorsFromWorkbook } = require("./scripts/seedFacultyAdvisors");
 
 // Multer — memory storage so we parse the buffer directly (no disk writes)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -892,6 +897,119 @@ app.post("/api/parse-elective-pdf", requireAuth, requireRole("admin", "scheduler
     res.status(500).json({ message: "Failed to parse PDF" });
   }
 });
+
+// ─── Data import (admin only) ────────────────────────────────────────────────
+
+function isExcelFile(file) {
+  const name = (file.originalname || "").toLowerCase();
+  return name.endsWith(".xlsx") || name.endsWith(".xls");
+}
+
+app.get("/api/import/stats", requireAuth, requireRole("admin"), async (req, res) => {
+  try {
+    const [students, faculty, courses, sections, offerings] = await Promise.all([
+      prisma.student.count(),
+      prisma.faculty.count(),
+      prisma.course.count(),
+      prisma.section.count(),
+      prisma.courseOffering.count(),
+    ]);
+    res.json({ students, faculty, courses, sections, offerings });
+  } catch (err) {
+    console.error("GET /api/import/stats error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post(
+  "/api/import/students",
+  requireAuth,
+  requireRole("admin"),
+  upload.array("files", 10),
+  async (req, res) => {
+    try {
+      if (!req.files?.length) {
+        return res.status(400).json({ message: "No Excel files uploaded" });
+      }
+      const invalid = req.files.find((f) => !isExcelFile(f));
+      if (invalid) {
+        return res.status(400).json({ message: "Only .xlsx / .xls files are accepted" });
+      }
+
+      const files = [];
+      let insertedOrUpdated = 0;
+
+      for (const file of req.files) {
+        const stats = await importStudentsFromBuffer(file.buffer);
+        insertedOrUpdated += stats.insertedOrUpdated;
+        files.push({ name: file.originalname, ...stats });
+      }
+
+      await logAction(req.user.userId, req.user.email, "import_students", {
+        files: req.files.map((f) => f.originalname),
+        insertedOrUpdated,
+      });
+
+      res.json({ insertedOrUpdated, files });
+    } catch (err) {
+      console.error("POST /api/import/students error:", err);
+      res.status(500).json({ message: err.message || "Failed to import students" });
+    }
+  }
+);
+
+app.post(
+  "/api/import/course-alloc",
+  requireAuth,
+  requireRole("admin"),
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No Excel file uploaded" });
+      }
+      if (!isExcelFile(req.file)) {
+        return res.status(400).json({ message: "Only .xlsx / .xls files are accepted" });
+      }
+
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+      const faculty = await importFacultyFromWorkbook(workbook);
+      const courses = await importCoursesFromWorkbook(workbook, req.file.originalname);
+      let advisors = null;
+      try {
+        advisors = await importFacultyAdvisorsFromWorkbook(workbook);
+      } catch (err) {
+        advisors = { error: err.message };
+      }
+
+      await logAction(req.user.userId, req.user.email, "import_course_alloc", {
+        file: req.file.originalname,
+        faculty,
+        courses: {
+          courses: courses.courses,
+          offerings: courses.offerings,
+          matched: courses.matched,
+        },
+        advisors,
+      });
+
+      res.json({
+        file: req.file.originalname,
+        faculty,
+        courses: {
+          courses: courses.courses,
+          offerings: courses.offerings,
+          matched: courses.matched,
+          unmatchedFaculty: courses.unmatched,
+        },
+        advisors,
+      });
+    } catch (err) {
+      console.error("POST /api/import/course-alloc error:", err);
+      res.status(500).json({ message: err.message || "Failed to import course allocation" });
+    }
+  }
+);
 
 // ─── Start ───────────────────────────────────────────────────────────────────
 
