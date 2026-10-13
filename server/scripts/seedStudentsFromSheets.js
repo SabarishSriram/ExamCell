@@ -192,13 +192,13 @@ function parseSheet(sheet, sheetName) {
   return rows;
 }
 
-async function importWorkbook(filePath, stats) {
-  const workbook = XLSX.readFile(filePath);
+async function importWorkbook(workbook, stats) {
   const seenSections = new Set();
 
   for (const sheetName of workbook.SheetNames) {
     const sheet = workbook.Sheets[sheetName];
     const rows = parseSheet(sheet, sheetName);
+    let count = 0;
 
     for (const row of rows) {
       const { regNo, name, sectionCode, specialization, email, phone } = row;
@@ -232,18 +232,27 @@ async function importWorkbook(filePath, stats) {
       });
 
       stats.insertedOrUpdated += 1;
+      count += 1;
     }
 
-    if (rows.length > 0) {
-      console.log(`  [${sheetName}] ${rows.length} students`);
+    if (count > 0) {
+      stats.sheets.push({ name: sheetName, count });
+      console.log(`  [${sheetName}] ${count} students`);
     }
   }
+}
+
+async function importStudentsFromBuffer(buffer) {
+  const workbook = XLSX.read(buffer, { type: "buffer" });
+  const stats = { insertedOrUpdated: 0, sheets: [] };
+  await importWorkbook(workbook, stats);
+  return stats;
 }
 
 async function main() {
   const fs = require("fs");
 
-  const stats = { insertedOrUpdated: 0 };
+  const stats = { insertedOrUpdated: 0, sheets: [] };
 
   try {
     for (const filePath of DATA_FILES) {
@@ -252,7 +261,7 @@ async function main() {
         continue;
       }
       console.log("\nImporting from:", path.relative(process.cwd(), filePath));
-      await importWorkbook(filePath, stats);
+      await importWorkbook(XLSX.readFile(filePath), stats);
     }
     console.log("\nDone.");
     console.log("Total students inserted/updated:", stats.insertedOrUpdated);
@@ -261,10 +270,14 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Error while seeding students:", err);
-  prisma
-    .$disconnect()
-    .catch(() => process.exit(1))
-    .finally(() => process.exit(1));
-});
+module.exports = { importStudentsFromBuffer, parseSheet };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("Error while seeding students:", err);
+    prisma
+      .$disconnect()
+      .catch(() => process.exit(1))
+      .finally(() => process.exit(1));
+  });
+}

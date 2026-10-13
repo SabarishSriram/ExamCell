@@ -43,7 +43,6 @@ function parseFacultySheet(sheet) {
 
   for (let r = headerIdx + 1; r < rows.length; r++) {
     const row = rows[r];
-    const sno = row[0];
     const empId = row[1];
     const name = row[2];
     const position = row[3];
@@ -65,6 +64,51 @@ function parseFacultySheet(sheet) {
   return faculty;
 }
 
+async function importFacultyFromWorkbook(workbook) {
+  const sheet = workbook.Sheets[SHEET_NAME];
+  if (!sheet) {
+    throw new Error(
+      `Sheet "${SHEET_NAME}" not found. Available: ${workbook.SheetNames.join(", ")}`
+    );
+  }
+
+  const faculty = parseFacultySheet(sheet);
+  let inserted = 0;
+  let updated = 0;
+
+  for (const f of faculty) {
+    const existing = await prisma.faculty.findUnique({
+      where: { empId: f.empId },
+    });
+
+    if (existing) {
+      await prisma.faculty.update({
+        where: { empId: f.empId },
+        data: {
+          name: f.name,
+          position: f.position,
+          mobile: f.mobile,
+          email: f.email,
+        },
+      });
+      updated++;
+    } else {
+      await prisma.faculty.create({
+        data: {
+          empId: f.empId,
+          name: f.name,
+          position: f.position,
+          mobile: f.mobile,
+          email: f.email,
+        },
+      });
+      inserted++;
+    }
+  }
+
+  return { parsed: faculty.length, inserted, updated };
+}
+
 async function main() {
   const fs = require("fs");
   if (!fs.existsSync(DATA_FILE)) {
@@ -74,60 +118,24 @@ async function main() {
 
   console.log("Reading:", path.relative(process.cwd(), DATA_FILE));
 
-  const workbook = XLSX.readFile(DATA_FILE);
-  const sheet = workbook.Sheets[SHEET_NAME];
-  if (!sheet) {
-    console.error(`Sheet "${SHEET_NAME}" not found. Available:`, workbook.SheetNames);
-    process.exit(1);
-  }
-
-  const faculty = parseFacultySheet(sheet);
-  console.log(`Parsed ${faculty.length} faculty members`);
-
-  let inserted = 0;
-  let updated = 0;
-
   try {
-    for (const f of faculty) {
-      const existing = await prisma.faculty.findUnique({
-        where: { empId: f.empId },
-      });
-
-      if (existing) {
-        await prisma.faculty.update({
-          where: { empId: f.empId },
-          data: {
-            name: f.name,
-            position: f.position,
-            mobile: f.mobile,
-            email: f.email,
-          },
-        });
-        updated++;
-      } else {
-        await prisma.faculty.create({
-          data: {
-            empId: f.empId,
-            name: f.name,
-            position: f.position,
-            mobile: f.mobile,
-            email: f.email,
-          },
-        });
-        inserted++;
-      }
-    }
-
-    console.log(`Done. Inserted: ${inserted}, Updated: ${updated}`);
+    const workbook = XLSX.readFile(DATA_FILE);
+    const stats = await importFacultyFromWorkbook(workbook);
+    console.log(`Parsed ${stats.parsed} faculty members`);
+    console.log(`Done. Inserted: ${stats.inserted}, Updated: ${stats.updated}`);
   } finally {
     await prisma.$disconnect();
   }
 }
 
-main().catch((err) => {
-  console.error("Error seeding faculty:", err);
-  prisma
-    .$disconnect()
-    .catch(() => process.exit(1))
-    .finally(() => process.exit(1));
-});
+module.exports = { importFacultyFromWorkbook, parseFacultySheet };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("Error seeding faculty:", err);
+    prisma
+      .$disconnect()
+      .catch(() => process.exit(1))
+      .finally(() => process.exit(1));
+  });
+}

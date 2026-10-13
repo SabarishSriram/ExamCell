@@ -20,8 +20,8 @@ const SECTION_CODE_PATTERN = /^[A-Z]{1,2}\d$/i;
  * Extract the starting academic year from the data filename.
  * e.g. "Course alloc-FA-25-26 EVEN.xlsx" → 25
  */
-function extractAcademicYear() {
-  const match = path.basename(DATA_FILE).match(/(\d{2})-(\d{2})/)
+function extractAcademicYear(filename = DATA_FILE) {
+  const match = path.basename(filename).match(/(\d{2})-(\d{2})/);
   return match ? parseInt(match[1], 10) : null;
 }
 
@@ -29,13 +29,12 @@ function extractAcademicYear() {
  * Compute 2-digit admission year for a given year level.
  * In academic year 25-26: I Year admitted 25, II Year admitted 24, III Year admitted 23
  */
-function getAdmissionYearSuffix(yearKey) {
-  const acadYear = extractAcademicYear();
+function getAdmissionYearSuffix(yearKey, acadYear) {
   if (!acadYear) return null;
   const offsets = { I_YEAR: 0, II_YEAR: 1, III_YEAR: 2, IV_YEAR: 3 };
   const offset = offsets[yearKey];
   if (offset === undefined) return null;
-  return String(acadYear - offset).padStart(2, '0');
+  return String(acadYear - offset).padStart(2, "0");
 }
 
 function stripFacultyName(s) {
@@ -277,7 +276,7 @@ function parseUGAllocation(sheet) {
   return result;
 }
 
-async function seedFromParsed(parsed, facultyList) {
+async function seedFromParsed(parsed, facultyList, acadYear) {
   const stats = { courses: 0, sections: 0, faculty: 0, offerings: 0, matched: 0, unmatched: [] };
   const facultyCache = new Map();
   let unknownFacultyCounter = 0;
@@ -336,7 +335,7 @@ async function seedFromParsed(parsed, facultyList) {
         if (!rawSection) continue;
 
         // Suffix section with admission year (e.g. U1 → U1-24)
-        const yearSuffix = getAdmissionYearSuffix(yearKey);
+        const yearSuffix = getAdmissionYearSuffix(yearKey, acadYear);
         const sectionCode = yearSuffix ? `${rawSection}-${yearSuffix}` : rawSection;
 
         // Ensure the suffixed section exists
@@ -414,7 +413,7 @@ async function main() {
   }
 
   try {
-    const stats = await seedFromParsed(parsed, facultyList);
+    const stats = await seedFromParsed(parsed, facultyList, extractAcademicYear(DATA_FILE));
     console.log("Seeded:", { courses: stats.courses, sections: stats.sections, matched: stats.matched, offerings: stats.offerings });
     if (stats.unmatched.length > 0) {
       console.log("Unmatched faculty (created with UGALOC_ IDs):", stats.unmatched);
@@ -425,10 +424,28 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Error:", err);
-  prisma
-    .$disconnect()
-    .catch(() => process.exit(1))
-    .finally(() => process.exit(1));
-});
+async function importCoursesFromWorkbook(workbook, filename = DATA_FILE) {
+  const ugSheet = workbook.Sheets[UG_SHEET];
+  const facultySheet = workbook.Sheets[FACULTY_SHEET];
+  if (!ugSheet) {
+    throw new Error(
+      `Sheet "${UG_SHEET}" not found. Available: ${workbook.SheetNames.join(", ")}`
+    );
+  }
+
+  const facultyList = facultySheet ? buildFacultyList(facultySheet) : [];
+  const parsed = parseUGAllocation(ugSheet);
+  return seedFromParsed(parsed, facultyList, extractAcademicYear(filename));
+}
+
+module.exports = { importCoursesFromWorkbook, parseUGAllocation, seedFromParsed };
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error("Error:", err);
+    prisma
+      .$disconnect()
+      .catch(() => process.exit(1))
+      .finally(() => process.exit(1));
+  });
+}
