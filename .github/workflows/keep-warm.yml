@@ -1,0 +1,17 @@
+name: Keep API warm
+
+# Render's free plan sleeps after ~15 min idle. Ping every 10 min during
+# working hours (06:30–20:30 IST = 01:00–14:59 UTC) to avoid cold starts
+# without burning the workspace's 750 free instance-hours.
+on:
+  schedule:
+    - cron: "*/10 1-14 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Hit health check
+        run: curl -fsS --retry 3 --retry-delay 10 --max-time 90 https://examcell-api.onrender.com/api/health
