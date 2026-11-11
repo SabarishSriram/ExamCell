@@ -16,14 +16,20 @@ const { importFacultyAdvisorsFromWorkbook } = require("./scripts/seedFacultyAdvi
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
 const app = express();
-const port = 8000;
+const port = process.env.PORT || 8000;
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "examcell-secret-key-change-in-production";
 
+// CORS_ORIGIN: comma-separated list of allowed origins (e.g. the Vercel URL).
+// Unset → reflect any origin (previous behaviour).
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((o) => o.trim()).filter(Boolean)
+  : true;
+
 app.use(
   cors({
-    origin: true,
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -94,7 +100,10 @@ app.post("/api/auth/login", async (req, res) => {
         .json({ message: "Email and password are required" });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Postgres compares strings case-sensitively (MySQL didn't), so match email case-insensitively
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: String(email).trim(), mode: "insensitive" } },
+    });
     if (!user) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -155,7 +164,9 @@ app.post("/api/users", requireAuth, requireRole("admin"), async (req, res) => {
     if (!["scheduler", "squad"].includes(role)) {
       return res.status(400).json({ message: "Invalid role — only scheduler or squad can be assigned" });
     }
-    const existing = await prisma.user.findUnique({ where: { email } });
+    const existing = await prisma.user.findFirst({
+      where: { email: { equals: String(email).trim(), mode: "insensitive" } },
+    });
     if (existing) {
       return res.status(409).json({ message: "Email already in use" });
     }
@@ -1012,6 +1023,8 @@ app.post(
 );
 
 // ─── Start ───────────────────────────────────────────────────────────────────
+
+app.get("/api/health", (req, res) => res.json({ ok: true }));
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

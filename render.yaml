@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: examcell-api
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: admin_email
+        sync: false
+      - key: admin_password
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false

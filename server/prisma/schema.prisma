@@ -1,147 +1,169 @@
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model Section {
-  code            String    @id @db.VarChar(50)
-  advisorEmpId    String?   @db.VarChar(50)
+    code         String  @id @db.VarChar(50)
+    advisorEmpId String? @db.VarChar(50)
 
-  advisor         Faculty?  @relation(fields: [advisorEmpId], references: [empId], onDelete: SetNull)
-  students        Student[]
-  examSections    ExamSection[]
-  reports         ExamReport[]
-  offerings       CourseOffering[]
+    advisor      Faculty?         @relation(fields: [advisorEmpId], references: [empId], onDelete: SetNull)
+    students     Student[]
+    examSections ExamSection[]
+    reports      ExamReport[]
+    offerings    CourseOffering[]
 
-  @@index([advisorEmpId])
+    @@index([advisorEmpId])
 }
 
 model Student {
-  regNo          String   @id @db.VarChar(50)
-  name           String   @db.VarChar(255)
-  sectionCode    String   @db.VarChar(50)
-  specialization String?  @db.VarChar(255)
-  phone          String?  @db.VarChar(20)
-  email          String?  @db.VarChar(255)
+    regNo          String  @id @db.VarChar(50)
+    name           String  @db.VarChar(255)
+    sectionCode    String  @db.VarChar(50)
+    specialization String? @db.VarChar(255)
+    phone          String? @db.VarChar(20)
+    email          String? @db.VarChar(255)
 
-  // Relations
-  section        Section  @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
-  incidents      ReportStudentIncident[]
+    // Relations
+    section   Section                 @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
+    incidents ReportStudentIncident[]
 
-  @@index([sectionCode])
+    @@index([sectionCode])
 }
 
 model Course {
-  code   String @id @db.VarChar(50)
-  name   String @db.VarChar(255)
-  type   String? @db.VarChar(50)   // e.g. Core/Elective
-  year   String? @db.VarChar(50)   // "1st Year", "2nd Year", etc.
+    code String  @id @db.VarChar(50)
+    name String  @db.VarChar(255)
+    type String? @db.VarChar(50) // e.g. Core/Elective
+    year String? @db.VarChar(50) // "1st Year", "2nd Year", etc.
 
-  offerings CourseOffering[]
+    offerings CourseOffering[]
 }
 
 model Faculty {
-  id        Int     @id @default(autoincrement())
-  empId     String  @unique @db.VarChar(50)
-  name      String  @db.VarChar(255)
-  position  String? @db.VarChar(100)
-  mobile    String? @db.VarChar(20)
-  email     String? @db.VarChar(255)
+    id       Int     @id @default(autoincrement())
+    empId    String  @unique @db.VarChar(50)
+    name     String  @db.VarChar(255)
+    position String? @db.VarChar(100)
+    mobile   String? @db.VarChar(20)
+    email    String? @db.VarChar(255)
 
-  offerings        CourseOffering[]
-  advisedSections  Section[]
+    offerings       CourseOffering[]
+    advisedSections Section[]
 }
 
 /// Mapping of a course to a year/slot/section and faculty member teaching it
 model CourseOffering {
-  id           Int      @id @default(autoincrement())
-  yearLabel    String?  @db.VarChar(50) // "I_YEAR", "II_YEAR", "III_YEAR"
-  slot         String?  @db.VarChar(50)
+    id        Int     @id @default(autoincrement())
+    yearLabel String? @db.VarChar(50) // "I_YEAR", "II_YEAR", "III_YEAR"
+    slot      String? @db.VarChar(50)
 
-  courseCode    String  @db.VarChar(50)
-  facultyEmpId String? @db.VarChar(50)
-  sectionCode  String? @db.VarChar(50)
+    courseCode   String  @db.VarChar(50)
+    facultyEmpId String? @db.VarChar(50)
+    sectionCode  String? @db.VarChar(50)
 
-  course   Course   @relation(fields: [courseCode], references: [code], onDelete: Cascade)
-  faculty  Faculty? @relation(fields: [facultyEmpId], references: [empId], onDelete: SetNull)
-  section  Section? @relation(fields: [sectionCode], references: [code], onDelete: SetNull)
+    course  Course   @relation(fields: [courseCode], references: [code], onDelete: Cascade)
+    faculty Faculty? @relation(fields: [facultyEmpId], references: [empId], onDelete: SetNull)
+    section Section? @relation(fields: [sectionCode], references: [code], onDelete: SetNull)
 
-  @@index([courseCode])
-  @@index([facultyEmpId])
-  @@index([sectionCode])
+    @@index([courseCode])
+    @@index([facultyEmpId])
+    @@index([sectionCode])
 }
 
 model Exam {
-  id        String   @id @db.VarChar(255)  // existing string IDs from JSON
-  name      String   @db.VarChar(255)
-  date      DateTime
-  fromTime  String   @db.VarChar(20)
-  toTime    String   @db.VarChar(20)
-  timeRange String   @db.VarChar(50)
-  year      String?  @db.VarChar(50)
-  venue     String?  @db.VarChar(255)
+    id        String   @id @db.VarChar(255) // existing string IDs from JSON
+    name      String   @db.VarChar(255)
+    date      DateTime
+    fromTime  String   @db.VarChar(20)
+    toTime    String   @db.VarChar(20)
+    timeRange String   @db.VarChar(50)
+    year           String?  @db.VarChar(50)
+    venue          String?  @db.VarChar(255)
+    electiveRegNos String?  @db.Text
+    bookletType    String?  @db.VarChar(50)
 
-  sections  ExamSection[]
-  reports   ExamReport[]
+    sections ExamSection[]
+    reports  ExamReport[]
 }
 
 /// Per-section information for an exam (to replace sections[] and venueBySection)
 model ExamSection {
-  id          Int     @id @default(autoincrement())
-  examId      String  @db.VarChar(255)
-  sectionCode String  @db.VarChar(50)
-  venue       String? @db.VarChar(255)
+    id          Int     @id @default(autoincrement())
+    examId      String  @db.VarChar(255)
+    sectionCode String  @db.VarChar(50)
+    venue       String? @db.VarChar(255)
 
-  exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
-  section Section @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
+    exam    Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+    section Section @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
 
-  @@index([examId])
-  @@index([sectionCode])
+    @@index([examId])
+    @@index([sectionCode])
 }
 
 model ExamReport {
-  id          String   @id @db.VarChar(255)  // existing string IDs from JSON
-  examId      String   @db.VarChar(255)
-  examName    String   @db.VarChar(255)
-  sectionCode String   @db.VarChar(50)
-  submittedAt DateTime
+    id          String   @id @db.VarChar(255) // existing string IDs from JSON
+    examId      String   @db.VarChar(255)
+    examName    String   @db.VarChar(255)
+    sectionCode String   @db.VarChar(50)
+    submittedAt DateTime
 
-  exam     Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
-  section  Section @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
-  students ReportStudentIncident[]
+    exam     Exam                    @relation(fields: [examId], references: [id], onDelete: Cascade)
+    section  Section                 @relation(fields: [sectionCode], references: [code], onDelete: Cascade)
+    students ReportStudentIncident[]
 
-  @@index([examId])
-  @@index([sectionCode])
+    @@index([examId])
+    @@index([sectionCode])
+}
+
+model BookletStock {
+    id        Int      @id @default(autoincrement())
+    type      String   @unique @db.VarChar(50)
+    quantity  Int      @default(0)
+    updatedAt DateTime @updatedAt
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique @db.VarChar(255)
-  passwordHash String   @db.Text
-  createdAt    DateTime @default(now())
+    id           Int      @id @default(autoincrement())
+    email        String   @unique @db.VarChar(255)
+    passwordHash String   @db.Text
+    role         String   @default("scheduler") @db.VarChar(50)
+    createdAt    DateTime @default(now())
+    logs         AuditLog[]
+}
+
+model AuditLog {
+    id        Int      @id @default(autoincrement())
+    userId    Int
+    userEmail String   @db.VarChar(255)
+    action    String   @db.VarChar(255)
+    details   String?  @db.Text
+    createdAt DateTime @default(now())
+    user      User     @relation(fields: [userId], references: [id])
+
+    @@index([userId])
 }
 
 /// Individual student row inside a report (presence / malpractice etc.)
 model ReportStudentIncident {
-  id           Int     @id @default(autoincrement())
-  reportId     String  @db.VarChar(255)
-  regNo        String? @db.VarChar(50)
-  studentRegNo String? @db.VarChar(50)
+    id           Int     @id @default(autoincrement())
+    reportId     String  @db.VarChar(255)
+    regNo        String? @db.VarChar(50)
+    studentRegNo String? @db.VarChar(50)
 
-  name         String  @db.VarChar(255)
-  isPresent    Boolean
-  activity     String? @db.Text
-  remarks      String? @db.Text
-  actionTaken  String? @db.Text
+    name        String  @db.VarChar(255)
+    isPresent   Boolean
+    activity    String? @db.Text
+    remarks     String? @db.Text
+    actionTaken String? @db.Text
 
-  report  ExamReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  student Student?   @relation(fields: [studentRegNo], references: [regNo], onDelete: SetNull)
+    report  ExamReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+    student Student?   @relation(fields: [studentRegNo], references: [regNo], onDelete: SetNull)
 
-  @@index([reportId])
-  @@index([studentRegNo])
+    @@index([reportId])
+    @@index([studentRegNo])
 }
-

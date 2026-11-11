@@ -1,3 +1,9 @@
 node_modules
 package-lock.json
 .env
+# Student data — never commit
+data/1st Year.xlsx
+data/2nd Year.xlsx
+data/3rd Year.xlsx
+data/*Year*.xlsx
+prisma/dev.db
